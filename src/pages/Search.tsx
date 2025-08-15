@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,23 +21,51 @@ import {
 } from "@/components/ui/select";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { mockAnnouncements } from "@/lib/mock-data";
+import { AnnouncementCard } from "@/components/AnnouncementCard";
 
 const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
 const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
 const goals = ["Entrar em uma banda", "Show/Evento", "Gravação", "Freelancer"];
 
 const Search = () => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [instrument, setInstrument] = useState("");
   const [genre, setGenre] = useState("");
   const [goal, setGoal] = useState("");
+  
+  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "" });
+  const [results, setResults] = useState(mockAnnouncements);
 
-  const activeFiltersCount = [instrument, genre, goal].filter(Boolean).length;
+  const activeFiltersCount = Object.values(activeFilters).filter(Boolean).length;
+
+  const handleApplyFilters = () => {
+    setActiveFilters({ instrument, genre, goal });
+  };
 
   const clearFilters = () => {
     setInstrument("");
     setGenre("");
     setGoal("");
+    setActiveFilters({ instrument: "", genre: "", goal: "" });
   };
+
+  useEffect(() => {
+    const filtered = mockAnnouncements.filter(ann => {
+      const searchTermMatch = searchTerm === "" ||
+        ann.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ann.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ann.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ann.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const instrumentMatch = activeFilters.instrument === "" || ann.tags.includes(activeFilters.instrument);
+      const genreMatch = activeFilters.genre === "" || ann.tags.includes(activeFilters.genre);
+      const goalMatch = activeFilters.goal === "" || ann.tags.includes(activeFilters.goal);
+
+      return searchTermMatch && instrumentMatch && genreMatch && goalMatch;
+    });
+    setResults(filtered);
+  }, [searchTerm, activeFilters]);
 
   return (
     <Layout title="Buscar">
@@ -48,6 +76,8 @@ const Search = () => {
             type="search"
             placeholder="Busque por músicos, bandas..."
             className="pl-10 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -111,7 +141,7 @@ const Search = () => {
               <DrawerFooter className="flex-row gap-2">
                 <Button variant="outline" className="flex-1" onClick={clearFilters}>Limpar</Button>
                 <DrawerClose asChild>
-                  <Button className="flex-1">Aplicar</Button>
+                  <Button className="flex-1" onClick={handleApplyFilters}>Aplicar</Button>
                 </DrawerClose>
               </DrawerFooter>
             </div>
@@ -119,8 +149,17 @@ const Search = () => {
         </Drawer>
       </div>
 
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <p className="text-muted-foreground">Faça uma busca ou use os filtros para encontrar músicos, bandas e oportunidades.</p>
+      <div className="space-y-4">
+        {results.length > 0 ? (
+          results.map((announcement) => (
+            <AnnouncementCard key={announcement.id} announcement={announcement} />
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <p className="text-muted-foreground">Nenhum resultado encontrado.</p>
+            <p className="text-sm text-muted-foreground/80">Tente ajustar sua busca ou filtros.</p>
+          </div>
+        )}
       </div>
     </Layout>
   );
