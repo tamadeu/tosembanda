@@ -4,7 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { states, City } from "@/lib/location-data";
 
 interface AnnounceStep2Props {
   type: 'musician' | 'band';
@@ -15,6 +23,21 @@ interface AnnounceStep2Props {
 const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [cities, setCities] = useState<City[]>([]);
+
+  useEffect(() => {
+    if (selectedState) {
+      const stateData = states.find(s => s.sigla === selectedState);
+      setCities(stateData ? stateData.cidades : []);
+      setSelectedCity(""); // Reseta a cidade quando o estado muda
+    } else {
+      setCities([]);
+      setSelectedCity("");
+    }
+  }, [selectedState]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.find(t => t.toLowerCase() === tagInput.trim().toLowerCase())) {
@@ -58,8 +81,43 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="location">Localização</Label>
-        <Input id="location" placeholder="Ex: Curitiba, PR" />
+        <Label>Localização</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="state" className="text-xs text-muted-foreground">Estado</Label>
+            <Select value={selectedState} onValueChange={setSelectedState}>
+              <SelectTrigger id="state">
+                <SelectValue placeholder="Selecione o estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {states.map((state) => (
+                  <SelectItem key={state.sigla} value={state.sigla}>
+                    {state.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="city" className="text-xs text-muted-foreground">Cidade</Label>
+            <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+              <SelectTrigger id="city">
+                <SelectValue placeholder="Selecione a cidade" />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map((city) => (
+                  <SelectItem key={city.nome} value={city.nome}>
+                    {city.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2 pt-2">
+          <Label htmlFor="neighborhood" className="text-xs text-muted-foreground">Bairro (Opcional)</Label>
+          <Input id="neighborhood" placeholder="Ex: Centro" />
+        </div>
       </div>
 
       <div className="space-y-2">
