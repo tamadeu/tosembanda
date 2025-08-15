@@ -73,9 +73,11 @@ const AnnouncementDetails = () => {
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
-          <Button className="w-full">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Entrar em contato
+          <Button asChild className="w-full">
+            <Link to={`/chat/${announcement.id}`}>
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Entrar em contato
+            </Link>
           </Button>
         </footer>
       </div>
