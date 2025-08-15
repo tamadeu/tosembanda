@@ -1,5 +1,5 @@
 import { AnnouncementCard, Announcement } from "@/components/AnnouncementCard";
-import { Home, Search, PlusSquare, User, Bell } from "lucide-react";
+import { Layout } from "@/components/Layout";
 
 const announcements: Announcement[] = [
   {
@@ -39,44 +39,11 @@ const announcements: Announcement[] = [
 
 const Index = () => {
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 font-sans">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col">
-        <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10">
-          <h1 className="text-xl font-bold text-center">MusiConnect</h1>
-        </header>
-
-        <main className="flex-1 p-4 space-y-4 overflow-y-auto pb-24">
-          {announcements.map((announcement) => (
-            <AnnouncementCard key={announcement.id} announcement={announcement} />
-          ))}
-        </main>
-
-        <footer className="fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto bg-white dark:bg-black border-t">
-          <nav className="flex justify-around items-center p-2">
-            <a href="#" className="flex flex-col items-center text-primary p-2">
-              <Home className="h-6 w-6" />
-              <span className="text-xs font-medium">Início</span>
-            </a>
-            <a href="#" className="flex flex-col items-center text-gray-500 hover:text-primary p-2">
-              <Search className="h-6 w-6" />
-              <span className="text-xs">Buscar</span>
-            </a>
-            <a href="#" className="flex flex-col items-center text-gray-500 hover:text-primary p-2">
-              <PlusSquare className="h-6 w-6" />
-              <span className="text-xs">Anunciar</span>
-            </a>
-            <a href="#" className="flex flex-col items-center text-gray-500 hover:text-primary p-2">
-              <Bell className="h-6 w-6" />
-              <span className="text-xs">Notificações</span>
-            </a>
-            <a href="#" className="flex flex-col items-center text-gray-500 hover:text-primary p-2">
-              <User className="h-6 w-6" />
-              <span className="text-xs">Perfil</span>
-            </a>
-          </nav>
-        </footer>
-      </div>
-    </div>
+    <Layout title="MusiConnect">
+      {announcements.map((announcement) => (
+        <AnnouncementCard key={announcement.id} announcement={announcement} />
+      ))}
+    </Layout>
   );
 };
 
