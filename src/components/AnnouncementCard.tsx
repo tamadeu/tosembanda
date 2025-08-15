@@ -9,18 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
-
-export type Announcement = {
-  id: number;
-  user: {
-    name: string;
-    avatarUrl: string;
-  };
-  title: string;
-  location: string;
-  description: string;
-  tags: string[];
-};
+import { Announcement } from "@/lib/mock-data";
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -40,7 +29,7 @@ export const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
             <p className="text-sm text-muted-foreground text-left">{announcement.user.name}</p>
             <div className="flex items-center text-xs text-muted-foreground mt-1">
               <MapPin className="w-3 h-3 mr-1" />
-              <span>{announcement.location}</span>
+              <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
             </div>
           </div>
         </CardHeader>

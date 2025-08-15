@@ -23,6 +23,7 @@ import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mockAnnouncements } from "@/lib/mock-data";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
+import { states, City } from "@/lib/location-data";
 
 const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
 const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
@@ -35,14 +36,28 @@ const Search = () => {
   const [genre, setGenre] = useState("");
   const [goal, setGoal] = useState("");
   const [type, setType] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [cities, setCities] = useState<City[]>([]);
   
-  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "", type: "" });
+  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "", type: "", state: "", city: "" });
   const [results, setResults] = useState(mockAnnouncements);
 
   const activeFiltersCount = Object.values(activeFilters).filter(Boolean).length;
 
+  useEffect(() => {
+    if (state) {
+      const stateData = states.find(s => s.sigla === state);
+      setCities(stateData ? stateData.cidades : []);
+      setCity("");
+    } else {
+      setCities([]);
+      setCity("");
+    }
+  }, [state]);
+
   const handleApplyFilters = () => {
-    setActiveFilters({ instrument, genre, goal, type });
+    setActiveFilters({ instrument, genre, goal, type, state, city });
   };
 
   const clearFilters = () => {
@@ -50,7 +65,9 @@ const Search = () => {
     setGenre("");
     setGoal("");
     setType("");
-    setActiveFilters({ instrument: "", genre: "", goal: "", type: "" });
+    setState("");
+    setCity("");
+    setActiveFilters({ instrument: "", genre: "", goal: "", type: "", state: "", city: "" });
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -69,8 +86,10 @@ const Search = () => {
       const genreMatch = activeFilters.genre === "" || ann.tags.includes(activeFilters.genre);
       const goalMatch = activeFilters.goal === "" || ann.tags.includes(activeFilters.goal);
       const typeMatch = activeFilters.type === "" || ann.type === activeFilters.type;
+      const stateMatch = activeFilters.state === "" || ann.location.state === activeFilters.state;
+      const cityMatch = activeFilters.city === "" || ann.location.city === activeFilters.city;
 
-      return searchTermMatch && instrumentMatch && genreMatch && goalMatch && typeMatch;
+      return searchTermMatch && instrumentMatch && genreMatch && goalMatch && typeMatch && stateMatch && cityMatch;
     });
     setResults(filtered);
   }, [searchTerm, activeFilters]);
@@ -108,6 +127,34 @@ const Search = () => {
                 <DrawerTitle>Filtros</DrawerTitle>
               </DrawerHeader>
               <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="state">Estado</Label>
+                    <Select value={state} onValueChange={setState}>
+                      <SelectTrigger id="state">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((s) => (
+                          <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Cidade</Label>
+                    <Select value={city} onValueChange={setCity} disabled={!state}>
+                      <SelectTrigger id="city">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((c) => (
+                          <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="type">Tipo de Anúncio</Label>
                   <Select value={type} onValueChange={setType}>
@@ -148,7 +195,7 @@ const Search = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="goal">Objetivo</Label>
-                  <Select value={goal} onValuechange={setGoal}>
+                  <Select value={goal} onValueChange={setGoal}>
                     <SelectTrigger id="goal">
                       <SelectValue placeholder="Selecione um objetivo" />
                     </SelectTrigger>

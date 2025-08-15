@@ -48,7 +48,7 @@ const AnnouncementDetails = () => {
                   <p className="text-sm text-muted-foreground">{announcement.user.name}</p>
                   <div className="flex items-center text-xs text-muted-foreground mt-1">
                     <MapPin className="w-3 h-3 mr-1" />
-                    <span>{announcement.location}</span>
+                    <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
                   </div>
                 </div>
               </div>
