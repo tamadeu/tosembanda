@@ -27,27 +27,34 @@ import { AnnouncementCard } from "@/components/AnnouncementCard";
 const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
 const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
 const goals = ["Entrar em uma banda", "Show/Evento", "Gravação", "Freelancer"];
+const suggestions = ["Vocalista", "Guitarra Rock", "Bateria Metal", "Baixo MPB", "Freelancer"];
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [instrument, setInstrument] = useState("");
   const [genre, setGenre] = useState("");
   const [goal, setGoal] = useState("");
+  const [type, setType] = useState("");
   
-  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "" });
+  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "", type: "" });
   const [results, setResults] = useState(mockAnnouncements);
 
   const activeFiltersCount = Object.values(activeFilters).filter(Boolean).length;
 
   const handleApplyFilters = () => {
-    setActiveFilters({ instrument, genre, goal });
+    setActiveFilters({ instrument, genre, goal, type });
   };
 
   const clearFilters = () => {
     setInstrument("");
     setGenre("");
     setGoal("");
-    setActiveFilters({ instrument: "", genre: "", goal: "" });
+    setType("");
+    setActiveFilters({ instrument: "", genre: "", goal: "", type: "" });
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchTerm(suggestion);
   };
 
   useEffect(() => {
@@ -61,11 +68,14 @@ const Search = () => {
       const instrumentMatch = activeFilters.instrument === "" || ann.tags.includes(activeFilters.instrument);
       const genreMatch = activeFilters.genre === "" || ann.tags.includes(activeFilters.genre);
       const goalMatch = activeFilters.goal === "" || ann.tags.includes(activeFilters.goal);
+      const typeMatch = activeFilters.type === "" || ann.type === activeFilters.type;
 
-      return searchTermMatch && instrumentMatch && genreMatch && goalMatch;
+      return searchTermMatch && instrumentMatch && genreMatch && goalMatch && typeMatch;
     });
     setResults(filtered);
   }, [searchTerm, activeFilters]);
+
+  const showSuggestions = searchTerm === "" && activeFiltersCount === 0;
 
   return (
     <Layout title="Buscar">
@@ -99,6 +109,18 @@ const Search = () => {
               </DrawerHeader>
               <div className="p-4 space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="type">Tipo de Anúncio</Label>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="musician">Músico procurando</SelectItem>
+                      <SelectItem value="band">Banda procurando</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="instrument">Instrumento</Label>
                   <Select value={instrument} onValueChange={setInstrument}>
                     <SelectTrigger id="instrument">
@@ -126,7 +148,7 @@ const Search = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="goal">Objetivo</Label>
-                  <Select value={goal} onValueChange={setGoal}>
+                  <Select value={goal} onValuechange={setGoal}>
                     <SelectTrigger id="goal">
                       <SelectValue placeholder="Selecione um objetivo" />
                     </SelectTrigger>
@@ -150,7 +172,18 @@ const Search = () => {
       </div>
 
       <div className="space-y-4">
-        {results.length > 0 ? (
+        {showSuggestions ? (
+          <div className="text-center pt-8">
+            <p className="text-muted-foreground mb-4">Tente buscar por:</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {suggestions.map((s) => (
+                <Button key={s} variant="outline" size="sm" onClick={() => handleSuggestionClick(s)}>
+                  {s}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : results.length > 0 ? (
           results.map((announcement) => (
             <AnnouncementCard key={announcement.id} announcement={announcement} />
           ))

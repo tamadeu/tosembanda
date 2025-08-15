@@ -8,6 +8,7 @@ export type Announcement = {
   location: string;
   description: string;
   tags: string[];
+  type: 'musician' | 'band';
 };
 
 export const mockAnnouncements: Announcement[] = [
@@ -18,6 +19,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Somos uma banda de rock alternativo com repertório autoral e alguns covers. Procuramos um baixista comprometido para ensaios semanais e shows.",
     tags: ["Baixo", "Rock", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 2,
@@ -26,6 +28,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "Sou vocalista com experiência em MPB e Bossa Nova. Tenho disponibilidade para shows em bares, eventos e gravações. Timbre suave.",
     tags: ["Vocal", "MPB", "Freelancer", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 3,
@@ -34,6 +37,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Procuramos um baterista versátil e com pegada para completar nossa formação. Ensaiamos aos sábados. Influências: Metallica, Pantera.",
     tags: ["Bateria", "Metal", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 4,
@@ -42,6 +46,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Curitiba, PR",
     description: "Banda de pop rock com agenda de shows procura tecladista com equipamento próprio. Ensaios duas vezes por semana.",
     tags: ["Teclado", "Pop", "Rock", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 5,
@@ -50,6 +55,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Porto Alegre, RS",
     description: "Ofereço meus serviços como guitarrista para gravação de trilhas, jingles e álbuns. Toco diversos estilos, do Jazz ao Metal.",
     tags: ["Guitarra", "Jazz", "Metal", "Gravação"],
+    type: 'musician',
   },
   {
     id: 6,
@@ -58,6 +64,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Salvador, BA",
     description: "Grupo de samba de raiz busca percussionista (pandeiro, tantã) para apresentações em rodas de samba e eventos.",
     tags: ["Percussão", "Samba", "Show/Evento"],
+    type: 'band',
   },
   {
     id: 7,
@@ -66,6 +73,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Fortaleza, CE",
     description: "Violinista com repertório clássico e popular para cerimônias de casamento, recepções e eventos corporativos.",
     tags: ["Violino", "Clássico", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 8,
@@ -74,6 +82,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Recife, PE",
     description: "Estúdio de gravação procura artistas e bandas para produção musical. Especializado em gêneros nordestinos e Pop.",
     tags: ["Produção", "Pop", "Gravação"],
+    type: 'band',
   },
   {
     id: 9,
@@ -82,6 +91,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Brasília, DF",
     description: "Banda de Hard Rock anos 80 (Guns, Bon Jovi) procura vocalista com bom alcance e drive na voz.",
     tags: ["Vocal", "Rock", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 10,
@@ -90,6 +100,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Procuro banda ou músicos para tocar Jazz e Blues em bares e casas noturnas. Tenho sax alto e tenor.",
     tags: ["Saxofone", "Jazz", "Blues", "Entrar em uma banda"],
+    type: 'musician',
   },
   {
     id: 11,
@@ -98,6 +109,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "Baixista com groove e pegada de funk/soul procura projetos para shows e gravações. Influências: James Brown, Tim Maia.",
     tags: ["Baixo", "Funk", "Soul", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 12,
@@ -106,6 +118,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Banda autoral de Indie Rock busca guitarrista base com equipamento próprio e vontade de compor.",
     tags: ["Guitarra", "Rock", "Indie", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 13,
@@ -114,6 +127,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Goiânia, GO",
     description: "Procuro primeira voz para formar dupla sertaneja. Foco em repertório universitário e composições próprias.",
     tags: ["Vocal", "Sertanejo", "Entrar em uma banda"],
+    type: 'musician',
   },
   {
     id: 14,
@@ -122,6 +136,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Florianópolis, SC",
     description: "Baterista com experiência em reggae e dub disponível para bandas e projetos na região da grande Florianópolis.",
     tags: ["Bateria", "Reggae", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 15,
@@ -130,6 +145,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Curitiba, PR",
     description: "Ofereço aulas de piano e teclado para iniciantes, além de serviço de acompanhamento para cantores e instrumentistas.",
     tags: ["Teclado", "Aulas", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 16,
@@ -138,6 +154,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Porto Alegre, RS",
     description: "Cantora procura violonista para projeto de voz e violão, com foco em MPB e Pop Rock nacional.",
     tags: ["Violão", "MPB", "Pop", "Show/Evento"],
+    type: 'band',
   },
   {
     id: 17,
@@ -146,6 +163,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Técnico de som com equipamento próprio (PA e monitor) para shows de pequeno e médio porte.",
     tags: ["Técnico de Som", "Show/Evento", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 18,
@@ -154,6 +172,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Recife, PE",
     description: "Banda de post-punk/new wave (The Cure, Joy Division) procura baixista com timbre característico do estilo.",
     tags: ["Baixo", "Rock", "Post-Punk", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 19,
@@ -162,6 +181,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Campinas, SP",
     description: "Banda de eventos procura vocalista feminina versátil, com repertório que vai do pop ao samba.",
     tags: ["Vocal", "Pop", "Samba", "Show/Evento"],
+    type: 'band',
   },
   {
     id: 20,
@@ -170,6 +190,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "DJ com foco em música eletrônica (House, Techno) e Funk. Equipamento completo para animar sua festa.",
     tags: ["DJ", "Eletrônica", "Funk", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 21,
@@ -178,6 +199,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Orquestra jovem abre audição para vaga de violoncelista. Necessário leitura de partitura.",
     tags: ["Violoncelo", "Clássico", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 22,
@@ -186,6 +208,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Guitarrista apaixonado por blues (B.B. King, Stevie Ray Vaughan) procura músicos para jam sessions e shows.",
     tags: ["Guitarra", "Blues", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 23,
@@ -194,6 +217,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Salvador, BA",
     description: "Ofereço serviço de backing vocal para gravações. Afinação e experiência com harmonias vocais.",
     tags: ["Vocal", "Gravação", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 24,
@@ -202,6 +226,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Fortaleza, CE",
     description: "Banda de forró pé-de-serra procura sanfoneiro para temporada de shows. Repertório de Luiz Gonzaga a Falamansa.",
     tags: ["Sanfona", "Forró", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 25,
@@ -210,6 +235,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Curitiba, PR",
     description: "Banda de pop punk (Blink-182, Green Day) procura baterista com energia e pegada.",
     tags: ["Bateria", "Pop", "Punk", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 26,
@@ -218,6 +244,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Online",
     description: "Escrevo letras e componho melodias para artistas de diversos gêneros. Parcerias via internet.",
     tags: ["Composição", "Letrista", "Gravação"],
+    type: 'musician',
   },
   {
     id: 27,
@@ -226,6 +253,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Procuro banda de ska ou músicos para montar um naipe de metais. Tenho trompete e flugelhorn.",
     tags: ["Trompete", "Ska", "Entrar em uma banda"],
+    type: 'musician',
   },
   {
     id: 28,
@@ -234,6 +262,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Porto Alegre, RS",
     description: "Guitarrista e baterista procuram baixista que também cante para fechar um power trio de rock clássico.",
     tags: ["Baixo", "Vocal", "Rock", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 29,
@@ -242,6 +271,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "Flautista transversal procura grupo de choro para ensaios e apresentações. Grande conhecimento do repertório.",
     tags: ["Flauta", "Choro", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 30,
@@ -250,6 +280,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Violonista de 7 cordas disponível para acompanhar cantores(as) e grupos de samba e choro.",
     tags: ["Violão", "Samba", "Choro", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 31,
@@ -258,6 +289,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Brasília, DF",
     description: "Harpista profissional para casamentos, coquetéis e eventos que exigem um toque de sofisticação.",
     tags: ["Harpa", "Clássico", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 32,
@@ -266,6 +298,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Joinville, SC",
     description: "Banda de Metalcore com material próprio procura vocalista que domine tanto o canto gutural quanto o melódico.",
     tags: ["Vocal", "Metal", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 33,
@@ -274,6 +307,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Cavaquinista com experiência procura rodas de samba para tocar aos finais de semana.",
     tags: ["Cavaquinho", "Samba", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 34,
@@ -282,6 +316,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Online",
     description: "Aulas de canto popular online. Técnica vocal, afinação, respiração e repertório. Primeira aula experimental gratuita.",
     tags: ["Vocal", "Aulas", "Online"],
+    type: 'musician',
   },
   {
     id: 35,
@@ -290,6 +325,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Curitiba, PR",
     description: "Produtor de synthwave/retrowave procura vocalista (masculino ou feminino) para projeto autoral com influências dos anos 80.",
     tags: ["Vocal", "Eletrônica", "Synthwave", "Gravação"],
+    type: 'band',
   },
   {
     id: 36,
@@ -298,6 +334,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Gaitista (diatônica e cromática) disponível para shows acústicos, bandas de blues, folk e rock.",
     tags: ["Gaita", "Blues", "Folk", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 37,
@@ -306,6 +343,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Florianópolis, SC",
     description: "Canto e toco ukulele, ideal para luais, eventos em quiosques e festas com tema praiano. Repertório pop e reggae.",
     tags: ["Ukulele", "Vocal", "Pop", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 38,
@@ -314,6 +352,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "Banda tributo a clássicos do Heavy Metal procura baixista com pegada, equipamento de qualidade e disponibilidade para ensaios.",
     tags: ["Baixo", "Metal", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 39,
@@ -322,6 +361,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Serviços de regulagem, reparo e customização de guitarras, baixos e violões. Deixe seu instrumento tinindo!",
     tags: ["Luthier", "Regulagem", "Reparo"],
+    type: 'musician',
   },
   {
     id: 40,
@@ -330,6 +370,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Brasília, DF",
     description: "Grupo de choro consolidado procura pandeirista com experiência no gênero para apresentações regulares.",
     tags: ["Pandeiro", "Choro", "Show/Evento"],
+    type: 'band',
   },
   {
     id: 41,
@@ -338,6 +379,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Porto Alegre, RS",
     description: "Violonista com formação erudita disponível para recitais solo, música de câmara e eventos formais.",
     tags: ["Violão", "Clássico", "Show/Evento"],
+    type: 'musician',
   },
   {
     id: 42,
@@ -346,6 +388,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Salvador, BA",
     description: "Banda de Disco Music e Funk dos anos 70 procura tecladista que domine timbres de Rhodes, Clavinet e sintetizadores da época.",
     tags: ["Teclado", "Funk", "Disco", "Entrar em uma banda"],
+    type: 'band',
   },
   {
     id: 43,
@@ -354,6 +397,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Curitiba, PR",
     description: "Baterista versátil com foco em Jazz, Fusion e música instrumental brasileira. Disponível para shows e gravações.",
     tags: ["Bateria", "Jazz", "Fusion", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 44,
@@ -362,6 +406,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Belo Horizonte, MG",
     description: "Procuro músicos para montar uma banda de R&B e Soul contemporâneo. Influências: H.E.R., Daniel Caesar, Jorja Smith.",
     tags: ["Vocal", "Soul", "R&B", "Entrar em uma banda"],
+    type: 'musician',
   },
   {
     id: 45,
@@ -370,6 +415,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Online",
     description: "Serviços de mixagem e masterização para sua música. Deixe sua gravação com som profissional. Preços acessíveis.",
     tags: ["Mixagem", "Masterização", "Gravação"],
+    type: 'musician',
   },
   {
     id: 46,
@@ -378,6 +424,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Rio de Janeiro, RJ",
     description: "Trio de voz, violão e baixo procura percussionista (cajón, bongô, etc) para shows em bares na Zona Sul.",
     tags: ["Percussão", "MPB", "Show/Evento"],
+    type: 'band',
   },
   {
     id: 47,
@@ -386,6 +433,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "São Paulo, SP",
     description: "Guitarrista no estilo de Django Reinhardt procura músicos (violino, outro violão, baixo acústico) para formar grupo de Jazz Manouche.",
     tags: ["Guitarra", "Jazz", "Entrar em uma banda"],
+    type: 'musician',
   },
   {
     id: 48,
@@ -394,6 +442,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Fortaleza, CE",
     description: "Banda de baile com agenda cheia procura trombonista para completar naipe de metais. Leitura à primeira vista é um diferencial.",
     tags: ["Trombone", "Show/Evento", "Freelancer"],
+    type: 'band',
   },
   {
     id: 49,
@@ -402,6 +451,7 @@ export const mockAnnouncements: Announcement[] = [
     location: "Online",
     description: "Tenho home studio e gravo vozes para jingles comerciais, spots de rádio e vídeos institucionais. Entrega rápida.",
     tags: ["Vocal", "Gravação", "Jingle", "Freelancer"],
+    type: 'musician',
   },
   {
     id: 50,
@@ -410,5 +460,6 @@ export const mockAnnouncements: Announcement[] = [
     location: "Manaus, AM",
     description: "Banda de Death Metal procura baterista com técnica (blast beats, pedal duplo) e compromisso para ensaios e composições.",
     tags: ["Bateria", "Metal", "Entrar em uma banda"],
+    type: 'band',
   },
 ];
