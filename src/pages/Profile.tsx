@@ -3,7 +3,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, MapPin, Settings } from "lucide-react";
+import { Edit, MapPin, Settings, PlusCircle } from "lucide-react";
+import { mockAnnouncements } from "@/lib/mock-data";
+import { AnnouncementCard } from "@/components/AnnouncementCard";
+import { Link } from "react-router-dom";
 
 const Profile = () => {
   const user = {
@@ -13,6 +16,10 @@ const Profile = () => {
     bio: "Guitarrista há 10 anos, apaixonado por Blues e Rock Clássico. Buscando projetos para tocar ao vivo e gravar. Influências: B.B. King, Eric Clapton, Jimi Hendrix.",
     skills: ["Guitarra Elétrica", "Violão", "Composição", "Blues", "Rock"],
   };
+
+  const userAnnouncements = mockAnnouncements.filter(
+    (ann) => ann.user.name === user.name
+  );
 
   return (
     <Layout title="Perfil">
@@ -58,6 +65,31 @@ const Profile = () => {
               {skill}
             </Badge>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Meus Anúncios</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {userAnnouncements.length > 0 ? (
+            <div className="space-y-4">
+              {userAnnouncements.map((announcement) => (
+                <AnnouncementCard key={announcement.id} announcement={announcement} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <p className="mb-4">Você ainda não publicou nenhum anúncio.</p>
+              <Button asChild>
+                <Link to="/announce">
+                  <PlusCircle className="w-4 h-4 mr-2" />
+                  Criar meu primeiro anúncio
+                </Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Layout>

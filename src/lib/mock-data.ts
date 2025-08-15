@@ -462,4 +462,22 @@ export const mockAnnouncements: Announcement[] = [
     tags: ["Bateria", "Metal", "Entrar em uma banda"],
     type: 'band',
   },
+  {
+    id: 51,
+    user: { name: "Alexandre Costa", avatarUrl: "https://i.pravatar.cc/150?img=4" },
+    title: "Guitarrista de Blues/Rock busca banda",
+    location: "Curitiba, PR",
+    description: "Guitarrista com 10 anos de experiência, focado em Blues e Rock Clássico. Procuro banda para shows e gravações. Influências: B.B. King, Eric Clapton, Jimi Hendrix.",
+    tags: ["Guitarra", "Blues", "Rock", "Entrar em uma banda"],
+    type: 'musician',
+  },
+  {
+    id: 52,
+    user: { name: "Alexandre Costa", avatarUrl: "https://i.pravatar.cc/150?img=4" },
+    title: "Aulas de Guitarra e Violão",
+    location: "Curitiba, PR",
+    description: "Ofereço aulas particulares de guitarra e violão para iniciantes e intermediários. Foco em técnica, teoria e repertório popular.",
+    tags: ["Aulas", "Guitarra", "Violão", "Freelancer"],
+    type: 'musician',
+  }
 ];
