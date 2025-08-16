@@ -39,7 +39,6 @@ const Login = () => {
           appearance={{ theme: ThemeSupa }}
           providers={[]}
           theme="dark"
-          redirectTo={window.location.origin + '/'} // Redireciona para a home após login/cadastro
           localization={{
             variables: {
               sign_in: {
