@@ -10,7 +10,9 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (session) {
+    // Se o usuário estiver logado, redireciona para a home,
+    // a menos que seja um fluxo de recuperação de senha.
+    if (session && !window.location.hash.includes('type=recovery')) {
       navigate('/');
     }
   }, [session, navigate]);
@@ -52,6 +54,11 @@ const Login = () => {
                 password_label: 'Sua senha',
                 button_label: 'Enviar instruções',
                 link_text: 'Esqueceu sua senha?',
+              },
+              update_password: {
+                password_label: 'Nova senha',
+                password_input_placeholder: 'Sua nova senha',
+                button_label: 'Salvar nova senha',
               },
             },
           }}
