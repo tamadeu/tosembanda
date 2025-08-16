@@ -36,7 +36,7 @@ export const Layout = ({ children, title }: LayoutProps) => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center p-2 transition-colors",
+                  "flex flex-1 flex-col items-center p-2 transition-colors",
                   location.pathname === item.href
                     ? "text-primary"
                     : "text-gray-500 hover:text-primary"
