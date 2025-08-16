@@ -1,38 +1,90 @@
+import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, MapPin, Settings, PlusCircle } from "lucide-react";
-import { mockAnnouncements } from "@/lib/mock-data";
+import { Edit, LogOut, MapPin, PlusCircle, Settings } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
-import { Link } from "react-router-dom";
+import { Announcement } from "@/lib/mock-data"; // Temporário
 
 const Profile = () => {
-  const user = {
-    name: "Alexandre Costa",
-    avatarUrl: "https://i.pravatar.cc/150?img=4",
-    location: "Curitiba, PR",
-    bio: "Guitarrista há 10 anos, apaixonado por Blues e Rock Clássico. Buscando projetos para tocar ao vivo e gravar. Influências: B.B. King, Eric Clapton, Jimi Hendrix.",
-    skills: ["Guitarra Elétrica", "Violão", "Composição", "Blues", "Rock"],
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]); // Temporário
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+      } else {
+        setProfile(data);
+      }
+      setLoading(false);
+    };
+
+    fetchProfile();
+    // TODO: Fetch user announcements from Supabase
+  }, [user]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
   };
 
-  const userAnnouncements = mockAnnouncements.filter(
-    (ann) => ann.user.name === user.name
-  );
+  if (loading) {
+    return (
+      <Layout title="Perfil">
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-6 w-32 mx-auto" />
+          <div className="flex justify-center gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Layout title="Perfil">
+        <p>Não foi possível carregar o perfil.</p>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Perfil">
       <div className="flex flex-col items-center gap-4">
         <Avatar className="w-24 h-24 border-4 border-primary">
-          <AvatarImage src={user.avatarUrl} alt={user.name} />
-          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={profile.avatar_url} alt={profile.name} />
+          <AvatarFallback>{profile.name ? profile.name.charAt(0) : user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="text-center">
-          <h2 className="text-2xl font-bold">{user.name}</h2>
+          <h2 className="text-2xl font-bold">{profile.name || 'Novo Usuário'}</h2>
           <div className="flex items-center justify-center text-sm text-muted-foreground mt-1">
             <MapPin className="w-4 h-4 mr-1" />
-            <span>{user.location}</span>
+            <span>{profile.location || 'Localização não definida'}</span>
           </div>
         </div>
         <div className="flex gap-2">
@@ -40,8 +92,8 @@ const Profile = () => {
                 <Edit className="w-4 h-4 mr-2" />
                 Editar Perfil
             </Button>
-            <Button variant="ghost" size="icon">
-                <Settings className="w-5 h-5" />
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <LogOut className="w-5 h-5" />
             </Button>
         </div>
       </div>
@@ -51,7 +103,7 @@ const Profile = () => {
           <CardTitle>Sobre</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-foreground/80">{user.bio}</p>
+          <p className="text-sm text-foreground/80">{profile.bio || 'Nenhuma biografia adicionada.'}</p>
         </CardContent>
       </Card>
 
@@ -60,11 +112,11 @@ const Profile = () => {
           <CardTitle>Habilidades e Interesses</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          {user.skills.map((skill) => (
+          {profile.skills?.length > 0 ? profile.skills.map((skill: string) => (
             <Badge key={skill} variant="secondary">
               {skill}
             </Badge>
-          ))}
+          )) : <p className="text-sm text-muted-foreground">Nenhuma habilidade adicionada.</p>}
         </CardContent>
       </Card>
 
@@ -73,9 +125,9 @@ const Profile = () => {
           <CardTitle>Meus Anúncios</CardTitle>
         </CardHeader>
         <CardContent>
-          {userAnnouncements.length > 0 ? (
+          {announcements.length > 0 ? (
             <div className="space-y-4">
-              {userAnnouncements.map((announcement) => (
+              {announcements.map((announcement) => (
                 <AnnouncementCard key={announcement.id} announcement={announcement} />
               ))}
             </div>
