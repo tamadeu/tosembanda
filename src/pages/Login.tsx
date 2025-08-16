@@ -10,9 +10,15 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Se o usuário estiver logado, redireciona para a home,
-    // a menos que seja um fluxo de recuperação de senha.
-    if (session && !window.location.hash.includes('type=recovery')) {
+    // Se a URL contiver 'type=recovery', o componente Auth cuidará disso.
+    // Não devemos redirecionar neste caso.
+    if (window.location.hash.includes('type=recovery')) {
+      return;
+    }
+
+    // Se houver uma sessão e não for um fluxo de recuperação,
+    // o usuário já está logado, então redirecionamos para a home.
+    if (session) {
       navigate('/');
     }
   }, [session, navigate]);
@@ -33,6 +39,7 @@ const Login = () => {
           appearance={{ theme: ThemeSupa }}
           providers={[]}
           theme="dark"
+          redirectTo={window.location.origin + '/'} // Redireciona para a home após login/cadastro
           localization={{
             variables: {
               sign_in: {
