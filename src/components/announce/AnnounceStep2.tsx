@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   Select,
@@ -17,57 +17,79 @@ import { states, City } from "@/lib/location-data";
 interface AnnounceStep2Props {
   type: 'musician' | 'band';
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: (data: any) => void;
+  isSubmitting: boolean;
 }
 
-const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
-  const [tags, setTags] = useState<string[]>([]);
+const AnnounceStep2 = ({ type, onBack, onSubmit, isSubmitting }: AnnounceStep2Props) => {
+  const [formData, setFormData] = useState({
+    bandName: "",
+    title: "",
+    experience: "",
+    description: "",
+    state: "",
+    city: "",
+    neighborhood: "",
+    tags: [] as string[],
+  });
   const [tagInput, setTagInput] = useState("");
-
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
   const [cities, setCities] = useState<City[]>([]);
 
   useEffect(() => {
-    if (selectedState) {
-      const stateData = states.find(s => s.sigla === selectedState);
+    if (formData.state) {
+      const stateData = states.find(s => s.sigla === formData.state);
       setCities(stateData ? stateData.cidades : []);
-      setSelectedCity(""); // Reseta a cidade quando o estado muda
     } else {
       setCities([]);
-      setSelectedCity("");
     }
-  }, [selectedState]);
+  }, [formData.state]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (field: string) => (value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'state') {
+      setFormData(prev => ({ ...prev, city: "" }));
+    }
+  };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.find(t => t.toLowerCase() === tagInput.trim().toLowerCase())) {
-      setTags([...tags, tagInput.trim()]);
+    if (tagInput.trim() && !formData.tags.find(t => t.toLowerCase() === tagInput.trim().toLowerCase())) {
+      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
       setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+    <form className="space-y-6" onSubmit={handleSubmit}>
       {type === 'band' && (
         <div className="space-y-2">
           <Label htmlFor="bandName">Nome da Banda/Projeto</Label>
-          <Input id="bandName" placeholder="Ex: The Garage Band" />
+          <Input id="bandName" placeholder="Ex: The Garage Band" value={formData.bandName} onChange={handleChange} required />
         </div>
       )}
 
       <div className="space-y-2">
         <Label htmlFor="title">Título do Anúncio</Label>
-        <Input id="title" placeholder={type === 'musician' ? "Ex: Guitarrista de Blues disponível" : "Ex: Procura-se baixista para banda de Rock"} />
+        <Input id="title" placeholder={type === 'musician' ? "Ex: Guitarrista de Blues disponível" : "Ex: Procura-se baixista para banda de Rock"} value={formData.title} onChange={handleChange} required />
       </div>
 
       {type === 'musician' && (
         <div className="space-y-2">
           <Label htmlFor="experience">Tempo de Experiência</Label>
-          <Input id="experience" placeholder="Ex: 5 anos" />
+          <Input id="experience" placeholder="Ex: 5 anos" value={formData.experience} onChange={handleChange} />
         </div>
       )}
 
@@ -77,6 +99,9 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
           id="description"
           placeholder="Fale mais sobre o que você procura, influências, disponibilidade, etc."
           rows={5}
+          value={formData.description}
+          onChange={handleChange}
+          required
         />
       </div>
 
@@ -85,7 +110,7 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="state" className="text-xs text-muted-foreground">Estado</Label>
-            <Select value={selectedState} onValueChange={setSelectedState}>
+            <Select value={formData.state} onValueChange={handleSelectChange('state')} required>
               <SelectTrigger id="state">
                 <SelectValue placeholder="Selecione o estado" />
               </SelectTrigger>
@@ -100,7 +125,7 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="city" className="text-xs text-muted-foreground">Cidade</Label>
-            <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+            <Select value={formData.city} onValueChange={handleSelectChange('city')} disabled={!formData.state} required>
               <SelectTrigger id="city">
                 <SelectValue placeholder="Selecione a cidade" />
               </SelectTrigger>
@@ -116,7 +141,7 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
         </div>
         <div className="space-y-2 pt-2">
           <Label htmlFor="neighborhood" className="text-xs text-muted-foreground">Bairro (Opcional)</Label>
-          <Input id="neighborhood" placeholder="Ex: Centro" />
+          <Input id="neighborhood" placeholder="Ex: Centro" value={formData.neighborhood} onChange={handleChange} />
         </div>
       </div>
 
@@ -140,7 +165,7 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
           </Button>
         </div>
         <div className="flex flex-wrap gap-2 mt-2">
-          {tags.map((tag) => (
+          {formData.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="flex items-center gap-1">
               {tag}
               <button type="button" onClick={() => handleRemoveTag(tag)} className="rounded-full hover:bg-background/50">
@@ -152,10 +177,11 @@ const AnnounceStep2 = ({ type, onBack, onSubmit }: AnnounceStep2Props) => {
       </div>
 
       <div className="flex gap-2">
-        <Button type="button" variant="outline" className="w-full" onClick={onBack}>
+        <Button type="button" variant="outline" className="w-full" onClick={onBack} disabled={isSubmitting}>
           Voltar
         </Button>
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Publicar Anúncio
         </Button>
       </div>
