@@ -95,12 +95,18 @@ const Chat = () => {
       if (!participantId) return;
 
       // 2. Find or create a conversation
-      const { data: existingConversation, error: findError } = await supabase
+      const query = supabase
         .from('conversations')
         .select('id')
-        .or(`and(participant1_id.eq.${currentUser.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${currentUser.id})`)
-        .eq('announcement_id', annId)
-        .maybeSingle();
+        .or(`and(participant1_id.eq.${currentUser.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${currentUser.id})`);
+
+      if (annId) {
+        query.eq('announcement_id', annId);
+      } else {
+        query.is('announcement_id', null);
+      }
+
+      const { data: existingConversation, error: findError } = await query.maybeSingle();
 
       if (findError) {
         showError("Erro ao carregar a conversa.");
