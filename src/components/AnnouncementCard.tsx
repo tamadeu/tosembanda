@@ -16,7 +16,7 @@ interface AnnouncementCardProps {
 }
 
 export const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
-  const userName = announcement.profile?.name || "Usuário Anônimo";
+  const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário Anônimo";
   const userInitial = userName.charAt(0).toUpperCase();
   const tags = announcement.tags || [];
 

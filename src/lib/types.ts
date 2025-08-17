@@ -1,6 +1,7 @@
 // Este tipo representa a estrutura de um perfil de usuário vindo do Supabase.
 export type Profile = {
-  name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   avatar_url: string | null;
 };
 
@@ -12,7 +13,7 @@ export type AnnouncementLocation = {
 };
 
 // Este é o tipo principal que usaremos na aplicação.
-// Ele representa um anúncio com as informações do perfil do criador já incluídas.
+// Ele representa um anúncio com as informações do criador já incluídas.
 export type AnnouncementWithProfile = {
   id: string;
   created_at: string;

@@ -39,7 +39,7 @@ const Profile = () => {
 
       const { data: announcementsData, error: announcementsError } = await supabase
         .from('announcements')
-        .select('*, profile:profiles!user_id(name, avatar_url)')
+        .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -88,18 +88,22 @@ const Profile = () => {
     );
   }
 
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Novo Usuário';
+  const locationString = [profile.location?.city, profile.location?.state].filter(Boolean).join(', ') || 'Localização não definida';
+  const fallbackInitial = fullName.charAt(0).toUpperCase();
+
   return (
     <Layout title="Perfil">
       <div className="flex flex-col items-center gap-4">
         <Avatar className="w-24 h-24 border-4 border-primary">
-          <AvatarImage src={profile.avatar_url} alt={profile.name} />
-          <AvatarFallback>{profile.name ? profile.name.charAt(0) : user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarImage src={profile.avatar_url} alt={fullName} />
+          <AvatarFallback>{fallbackInitial}</AvatarFallback>
         </Avatar>
         <div className="text-center">
-          <h2 className="text-2xl font-bold">{profile.name || 'Novo Usuário'}</h2>
+          <h2 className="text-2xl font-bold">{fullName}</h2>
           <div className="flex items-center justify-center text-sm text-muted-foreground mt-1">
             <MapPin className="w-4 h-4 mr-1" />
-            <span>{profile.location || 'Localização não definida'}</span>
+            <span>{locationString}</span>
           </div>
         </div>
         <div className="flex gap-2">

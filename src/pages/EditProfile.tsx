@@ -11,13 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess } from "@/utils/toast";
 import { Loader2, Plus, X } from "lucide-react";
+import { AvatarUpload } from "@/components/AvatarUpload";
+import { states, City } from "@/lib/location-data";
 
 const profileSchema = z.object({
-  name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
-  location: z.string().optional(),
+  first_name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
+  last_name: z.string().min(2, { message: "O sobrenome deve ter pelo menos 2 caracteres." }),
+  state: z.string().optional(),
+  city: z.string().optional(),
+  neighborhood: z.string().optional(),
   bio: z.string().optional(),
   skills: z.array(z.string()).optional(),
 });
@@ -30,16 +36,32 @@ const EditProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [cities, setCities] = useState<City[]>([]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: "",
-      location: "",
+      first_name: "",
+      last_name: "",
+      state: "",
+      city: "",
+      neighborhood: "",
       bio: "",
       skills: [],
     },
   });
+
+  const selectedState = form.watch('state');
+
+  useEffect(() => {
+    if (selectedState) {
+      const stateData = states.find(s => s.sigla === selectedState);
+      setCities(stateData ? stateData.cidades : []);
+    } else {
+      setCities([]);
+    }
+  }, [selectedState]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -57,11 +79,15 @@ const EditProfile = () => {
         navigate('/profile');
       } else if (data) {
         form.reset({
-          name: data.name || '',
-          location: data.location || '',
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          state: data.location?.state || '',
+          city: data.location?.city || '',
+          neighborhood: data.location?.neighborhood || '',
           bio: data.bio || '',
           skills: data.skills || [],
         });
+        setAvatarUrl(data.avatar_url);
       }
       setLoading(false);
     };
@@ -82,6 +108,10 @@ const EditProfile = () => {
     form.setValue('skills', currentSkills.filter(tag => tag !== tagToRemove));
   };
 
+  const handleAvatarUpload = (url: string) => {
+    setAvatarUrl(url);
+  };
+
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
 
@@ -89,10 +119,16 @@ const EditProfile = () => {
     const { error } = await supabase
       .from('profiles')
       .update({
-        name: data.name,
-        location: data.location,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        location: {
+          state: data.state,
+          city: data.city,
+          neighborhood: data.neighborhood,
+        },
         bio: data.bio,
         skills: data.skills,
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
@@ -111,10 +147,10 @@ const EditProfile = () => {
     return (
       <Layout title="Editar Perfil">
         <div className="space-y-6">
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-24 rounded-full mx-auto" />
+          <Skeleton className="h-10 w-32 mx-auto" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-20 w-full" />
           <Skeleton className="h-10 w-full" />
         </div>
       </Layout>
@@ -123,34 +159,90 @@ const EditProfile = () => {
 
   return (
     <Layout title="Editar Perfil">
+      <AvatarUpload initialUrl={avatarUrl} onUpload={handleAvatarUpload} />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="first_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Seu nome" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="last_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sobrenome</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Seu sobrenome" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {states.map(s => <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cidade</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedState}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cities.map(c => <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+           <FormField
             control={form.control}
-            name="name"
+            name="neighborhood"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>Bairro (Opcional)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu nome completo" {...field} />
+                  <Input placeholder="Seu bairro" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Localização</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex: São Paulo, SP" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
           <FormField
             control={form.control}
             name="bio"
@@ -158,7 +250,7 @@ const EditProfile = () => {
               <FormItem>
                 <FormLabel>Bio</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Fale um pouco sobre você, suas influências e o que procura." {...field} />
+                  <Textarea placeholder="Fale um pouco sobre você..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -177,10 +269,7 @@ const EditProfile = () => {
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
+                      if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); }
                     }}
                   />
                   <Button type="button" variant="outline" size="icon" onClick={handleAddTag}>
