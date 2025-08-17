@@ -11,12 +11,14 @@ import { showError } from "@/utils/toast";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { ChatContext } from "@/components/ChatContext";
+import { MessageContextCard } from "@/components/MessageContextCard";
 
 type Message = {
   id: string;
   content: string;
   sender_id: string;
   created_at: string;
+  announcement_id: string | null;
 };
 
 type OtherUser = {
@@ -205,6 +207,7 @@ const Chat = () => {
       content: content,
       sender_id: currentUser.id,
       created_at: new Date().toISOString(),
+      announcement_id: messages.length === 0 ? announcementId || null : null,
     };
 
     setMessages(prevMessages => [...prevMessages, tempMessage]);
@@ -215,11 +218,8 @@ const Chat = () => {
       sender_id: currentUser.id,
       receiver_id: otherUser.id,
       content: content,
+      announcement_id: messages.length === 0 ? announcementId || null : null,
     };
-
-    if (announcementId) {
-      messageData.announcement_id = announcementId;
-    }
 
     const { data: savedMessage, error } = await supabase
       .from('messages')
@@ -294,25 +294,29 @@ const Chat = () => {
         </header>
 
         <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
-            >
-              {msg.sender_id !== currentUser?.id && (
-                 <Avatar className="w-8 h-8">
-                    <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
-                    <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
+          {messages.map((msg, index) => (
+            <div key={msg.id}>
+              {index === 0 && msg.announcement_id && announcementContext && (
+                <MessageContextCard announcement={announcementContext} />
               )}
               <div
-                className={`max-w-xs md:max-w-md p-3 rounded-lg ${
-                  msg.sender_id === currentUser?.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
+                className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm">{msg.content}</p>
+                {msg.sender_id !== currentUser?.id && (
+                   <Avatar className="w-8 h-8">
+                      <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
+                      <AvatarFallback>{userInitial}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div
+                  className={`max-w-xs md:max-w-md p-3 rounded-lg ${
+                    msg.sender_id === currentUser?.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  <p className="text-sm">{msg.content}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -321,7 +325,7 @@ const Chat = () => {
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
-          {showContext && (announcementContext || (userId && !announcementId)) && (
+          {showContext && messages.length === 0 && (announcementContext || (userId && !announcementId)) && (
             <div className="mb-2">
               <ChatContext
                 type={announcementContext ? 'announcement' : 'profile'}
