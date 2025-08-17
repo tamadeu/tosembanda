@@ -11,7 +11,6 @@ import { ptBR } from 'date-fns/locale';
 
 type Conversation = {
   conversation_id: string;
-  announcement_id: string;
   other_user_id: string;
   other_user_first_name: string | null;
   other_user_last_name: string | null;

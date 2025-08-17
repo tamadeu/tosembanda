@@ -52,7 +52,6 @@ const Chat = () => {
       }
 
       let participantId: string | undefined = userId;
-      let annId: string | undefined = announcementId;
 
       // 1. Determine the other participant
       if (announcementId) {
@@ -94,12 +93,11 @@ const Chat = () => {
 
       if (!participantId) return;
 
-      // 2. Find the most recent conversation between the two users
-      const { data: existingConversation, error: findError } = await supabase
+      // 2. Find or create a conversation between the two users
+      const { data: existingConversation } = await supabase
         .from('conversations')
         .select('id')
         .or(`and(participant1_id.eq.${currentUser.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${currentUser.id})`)
-        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -107,13 +105,11 @@ const Chat = () => {
       if (existingConversation) {
         convId = existingConversation.id;
       } else {
-        // If no conversation exists at all, create a new one.
         const { data: newConversation, error: createError } = await supabase
           .from('conversations')
           .insert({
             participant1_id: currentUser.id,
             participant2_id: participantId,
-            announcement_id: annId, // annId can be null
           })
           .select('id')
           .single();
@@ -181,12 +177,19 @@ const Chat = () => {
     const content = newMessage.trim();
     setNewMessage("");
 
-    const { error } = await supabase.from('messages').insert({
+    const messageData: any = {
       conversation_id: conversationId,
       sender_id: currentUser.id,
       receiver_id: otherUser.id,
       content: content,
-    });
+    };
+
+    // If this is the first message and it's from an announcement, tag it.
+    if (messages.length === 0 && announcementId) {
+      messageData.announcement_id = announcementId;
+    }
+
+    const { error } = await supabase.from('messages').insert(messageData);
 
     if (error) {
       showError("Não foi possível enviar a mensagem.");
