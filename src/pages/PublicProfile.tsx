@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin } from "lucide-react";
+import { MapPin, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { AnnouncementWithProfile } from "@/lib/types";
@@ -19,6 +19,7 @@ const PublicProfile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const isOwnProfile = currentUser && currentUser.id === id;
 
   useEffect(() => {
     const fetchPublicProfile = async () => {
@@ -48,7 +49,6 @@ const PublicProfile = () => {
 
       setLoading(false);
 
-      // Se houver um usuário logado e ele não for o dono do perfil, cria a notificação.
       if (currentUser && currentUser.id !== id) {
         await supabase.functions.invoke('create-profile-view-notification', {
           body: { profileOwnerId: id },
@@ -104,6 +104,14 @@ const PublicProfile = () => {
             <span>{locationString}</span>
           </div>
         </div>
+        {!isOwnProfile && currentUser && (
+          <Button asChild className="mt-2">
+            <Link to={`/chat/user/${id}`}>
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Entrar em contato
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Card className="mt-6">

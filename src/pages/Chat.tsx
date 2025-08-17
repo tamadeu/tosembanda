@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AnnouncementWithProfile } from "@/lib/types";
 
 type Message = {
   id: number;
@@ -13,10 +12,17 @@ type Message = {
   sender: 'me' | 'other';
 };
 
+type OtherUser = {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+}
+
 const Chat = () => {
-  const { id } = useParams<{ id: string }>();
+  const { announcementId, userId } = useParams<{ announcementId?: string, userId?: string }>();
   const navigate = useNavigate();
-  const [announcement, setAnnouncement] = useState<AnnouncementWithProfile | null>(null);
+  const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Olá! Vi seu anúncio e tenho interesse.", sender: 'me' },
@@ -26,17 +32,38 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
-    const fetchAnnouncement = async () => {
-      if (!id) return;
-      const { data } = await supabase
-        .from('announcements')
-        .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
-        .eq('id', id)
-        .single();
-      setAnnouncement(data);
+    const fetchChatParticipant = async () => {
+      if (announcementId) {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('*, profile:profiles!user_id(id, first_name, last_name, avatar_url)')
+          .eq('id', announcementId)
+          .single();
+        
+        if (error || !data?.profile) {
+            console.error("Error fetching announcement for chat:", error);
+            navigate(-1);
+            return;
+        }
+        setOtherUser(data.profile as OtherUser);
+
+      } else if (userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .eq('id', userId)
+          .single();
+
+        if (error || !data) {
+            console.error("Error fetching user for chat:", error);
+            navigate(-1);
+            return;
+        }
+        setOtherUser(data as OtherUser);
+      }
     };
-    fetchAnnouncement();
-  }, [id]);
+    fetchChatParticipant();
+  }, [announcementId, userId, navigate]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
@@ -49,15 +76,15 @@ const Chat = () => {
     setNewMessage("");
   };
 
-  if (!announcement) {
+  if (!otherUser) {
     return (
       <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col items-center justify-center">
-        <p>Carregando...</p>
+        <p>Carregando conversa...</p>
       </div>
     );
   }
 
-  const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário";
+  const userName = [otherUser.first_name, otherUser.last_name].filter(Boolean).join(' ') || "Usuário";
   const userInitial = userName.charAt(0);
 
   return (
@@ -68,7 +95,7 @@ const Chat = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <Avatar className="w-10 h-10">
-            <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+            <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
           <h1 className="text-lg font-semibold">{userName}</h1>
@@ -82,7 +109,7 @@ const Chat = () => {
             >
               {msg.sender === 'other' && (
                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+                    <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
                     <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               )}

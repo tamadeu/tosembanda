@@ -35,7 +35,7 @@ const ChatList = () => {
           {mockConversations.map((convo) => (
             <Link
               key={convo.announcementId}
-              to={`/chat/${convo.announcementId}`}
+              to={`/chat/announcement/${convo.announcementId}`}
               className="block p-4 rounded-lg hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-4">
