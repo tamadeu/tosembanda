@@ -1,58 +1,121 @@
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const mockConversations = [
-  {
-    announcementId: "c5a6b2d8-1f3e-4a7b-8c9d-0e1f2a3b4c5d", // Example UUID
-    userName: "Carla Dias",
-    userAvatar: "https://i.pravatar.cc/150?img=1",
-    lastMessage: "Opa, legal! Me fala um pouco mais sobre você.",
-    time: "5m atrás",
-  },
-  {
-    announcementId: "f9e8d7c6-5b4a-3c2d-1e0f-a9b8c7d6e5f4", // Example UUID
-    userName: "Banda Scapegoat",
-    userAvatar: "https://i.pravatar.cc/150?img=3",
-    lastMessage: "Ainda estamos procurando sim! Qual sua experiência?",
-    time: "2h atrás",
-  },
-  {
-    announcementId: "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6", // Example UUID
-    userName: "Jorge Antunes",
-    userAvatar: "https://i.pravatar.cc/150?img=5",
-    lastMessage: "Vi que você toca guitarra, é isso mesmo?",
-    time: "1d atrás",
-  },
-];
+type Conversation = {
+  conversation_id: string;
+  announcement_id: string;
+  other_user_id: string;
+  other_user_first_name: string | null;
+  other_user_last_name: string | null;
+  other_user_avatar_url: string | null;
+  last_message_content: string | null;
+  last_message_created_at: string | null;
+};
 
 const ChatList = () => {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (!user) return;
+
+      setLoading(true);
+      const { data, error } = await supabase.rpc('get_user_conversations', { p_user_id: user.id });
+
+      if (error) {
+        console.error("Error fetching conversations:", error);
+      } else {
+        setConversations(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchConversations();
+
+    const channel = supabase
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          // If the new message belongs to one of the user's conversations, refetch the list
+          if (user && (payload.new.sender_id === user.id || payload.new.receiver_id === user.id)) {
+            fetchConversations();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  if (loading) {
+    return (
+      <Layout title="Conversas">
+        <div className="space-y-2">
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="w-12 h-12 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+          <div className="flex items-center gap-4 p-4">
+            <Skeleton className="w-12 h-12 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Conversas">
-      {mockConversations.length > 0 ? (
+      {conversations.length > 0 ? (
         <div className="space-y-2">
-          {mockConversations.map((convo) => (
-            <Link
-              key={convo.announcementId}
-              to={`/chat/announcement/${convo.announcementId}`}
-              className="block p-4 rounded-lg hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <Avatar className="w-12 h-12 border">
-                  <AvatarImage src={convo.userAvatar} alt={convo.userName} />
-                  <AvatarFallback>{convo.userName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex justify-between items-start">
-                    <p className="font-semibold truncate">{convo.userName}</p>
-                    <p className="text-xs text-muted-foreground flex-shrink-0">{convo.time}</p>
+          {conversations.map((convo) => {
+            const userName = [convo.other_user_first_name, convo.other_user_last_name].filter(Boolean).join(' ') || "Usuário";
+            const timeAgo = convo.last_message_created_at 
+              ? formatDistanceToNow(new Date(convo.last_message_created_at), { addSuffix: true, locale: ptBR })
+              : '';
+
+            return (
+              <Link
+                key={convo.conversation_id}
+                to={`/chat/user/${convo.other_user_id}`}
+                className="block p-4 rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-12 h-12 border">
+                    <AvatarImage src={convo.other_user_avatar_url || undefined} alt={userName} />
+                    <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-start">
+                      <p className="font-semibold truncate">{userName}</p>
+                      <p className="text-xs text-muted-foreground flex-shrink-0">{timeAgo}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">{convo.last_message_content || "Nenhuma mensagem ainda."}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-64 text-center">
