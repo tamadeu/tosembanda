@@ -1,29 +1,50 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
-import { showSuccess } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Loader2 } from 'lucide-react';
+
+const updatePasswordSchema = z.object({
+  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem.",
+  path: ["confirmPassword"],
+});
+
+type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
 
 const UpdatePassword = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Este evento é disparado após o usuário atualizar a senha com sucesso.
-      // Em seguida, o usuário é deslogado e redirecionado para a página de login.
-      if (event === 'USER_UPDATED' && session) {
-        supabase.auth.signOut().then(() => {
-          showSuccess("Senha atualizada com sucesso! Por favor, faça o login novamente.");
-          navigate('/login');
-        });
-      }
-    });
+  const form = useForm<UpdatePasswordFormValues>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+  const onSubmit = async (data: UpdatePasswordFormValues) => {
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ password: data.password });
+    setIsSubmitting(false);
+
+    if (error) {
+      showError(error.message || "Ocorreu um erro ao atualizar a senha.");
+    } else {
+      await supabase.auth.signOut();
+      showSuccess("Senha atualizada com sucesso! Por favor, faça o login novamente.");
+      navigate('/login');
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
@@ -36,22 +57,40 @@ const UpdatePassword = () => {
             Digite sua nova senha abaixo.
           </p>
         </div>
-        <Auth
-          supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
-          providers={[]}
-          view="update_password"
-          theme="dark"
-          localization={{
-            variables: {
-              update_password: {
-                password_label: 'Nova senha',
-                password_input_placeholder: 'Sua nova senha',
-                button_label: 'Salvar nova senha',
-              },
-            },
-          }}
-        />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nova Senha</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirme a Nova Senha</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar Nova Senha
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );
