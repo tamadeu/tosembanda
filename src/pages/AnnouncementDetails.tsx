@@ -76,11 +76,13 @@ const AnnouncementDetails = () => {
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
       <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col">
-        <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="-ml-2" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-bold text-center flex-1 -ml-10">Detalhes</h1>
+        <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center justify-center relative">
+          <div className="absolute left-2 top-1/2 -translate-y-1/2">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </div>
+          <h1 className="text-xl font-bold text-center">Detalhes</h1>
         </header>
 
         <main className="flex-1 p-4 space-y-4 overflow-y-auto pb-24">
