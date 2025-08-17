@@ -93,7 +93,9 @@ const AnnouncementDetails = () => {
                 </Avatar>
                 <div className="flex-1">
                   <CardTitle className="text-lg font-bold">{announcement.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{userName}</p>
+                  <Link to={`/user/${announcement.user_id}`} className="text-sm text-muted-foreground hover:underline">
+                    {userName}
+                  </Link>
                   {announcement.location && (
                     <div className="flex items-center text-xs text-muted-foreground mt-1">
                       <MapPin className="w-3 h-3 mr-1" />

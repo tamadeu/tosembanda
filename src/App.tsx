@@ -18,6 +18,7 @@ import Announce from "./pages/Announce";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import EditAnnouncement from "./pages/EditAnnouncement";
+import PublicProfile from "./pages/PublicProfile";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/search" element={<Search />} />
             <Route path="/announcement/:id" element={<AnnouncementDetails />} />
+            <Route path="/user/:id" element={<PublicProfile />} />
             
             {/* Rotas Protegidas */}
             <Route element={<ProtectedRoute />}>
