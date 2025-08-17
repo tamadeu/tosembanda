@@ -44,7 +44,7 @@ const Search = () => {
   const [goal, setGoal] = useState(searchParams.get('goal') || "");
   const [type, setType] = useState(searchParams.get('type') || "");
   const [state, setState] = useState(searchParams.get('state') || "");
-  const [city, setCity] = useState(search_params.get('city') || "");
+  const [city, setCity] = useState(searchParams.get('city') || "");
   const [cities, setCities] = useState<City[]>([]);
   
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
