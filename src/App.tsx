@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import EditAnnouncement from "./pages/EditAnnouncement";
 import PublicProfile from "./pages/PublicProfile";
+import UpdatePassword from "./pages/UpdatePassword";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/search" element={<Search />} />
             <Route path="/announcement/:id" element={<AnnouncementDetails />} />
             <Route path="/user/:id" element={<PublicProfile />} />
