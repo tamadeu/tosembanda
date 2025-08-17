@@ -3,17 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { showSuccess } from '@/utils/toast';
 
 const UpdatePassword = () => {
-  const { session } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (session) {
-      navigate('/');
-    }
-  }, [session, navigate]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Este evento é disparado após o usuário atualizar a senha com sucesso.
+      // Em seguida, o usuário é deslogado e redirecionado para a página de login.
+      if (event === 'USER_UPDATED' && session) {
+        supabase.auth.signOut().then(() => {
+          showSuccess("Senha atualizada com sucesso! Por favor, faça o login novamente.");
+          navigate('/login');
+        });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
