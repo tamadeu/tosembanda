@@ -27,3 +27,17 @@ export type AnnouncementWithProfile = {
   experience: string | null;
   profile: Profile | null;
 };
+
+// Novo tipo para o resultado da busca de perfis
+export type ProfileSearchResult = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  skills: string[] | null;
+  location: {
+    state: string;
+    city: string;
+  } | null;
+};

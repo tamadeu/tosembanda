@@ -25,8 +25,10 @@ import { Badge } from "@/components/ui/badge";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { states, City } from "@/lib/location-data";
 import { supabase } from "@/integrations/supabase/client";
-import { AnnouncementWithProfile } from "@/lib/types";
+import { AnnouncementWithProfile, ProfileSearchResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileCard } from "@/components/ProfileCard";
 
 const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
 const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
@@ -36,20 +38,20 @@ const suggestions = ["Vocalista", "Guitarra Rock", "Bateria Metal", "Baixo MPB",
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // State for UI elements (search input and drawer filters)
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || "");
   const [instrument, setInstrument] = useState(searchParams.get('instrument') || "");
   const [genre, setGenre] = useState(searchParams.get('genre') || "");
   const [goal, setGoal] = useState(searchParams.get('goal') || "");
   const [type, setType] = useState(searchParams.get('type') || "");
   const [state, setState] = useState(searchParams.get('state') || "");
-  const [city, setCity] = useState(searchParams.get('city') || "");
+  const [city, setCity] = useState(search_params.get('city') || "");
   const [cities, setCities] = useState<City[]>([]);
   
-  const [results, setResults] = useState<AnnouncementWithProfile[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
+  const [profiles, setProfiles] = useState<ProfileSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("announcements");
 
-  // Sync UI state from URL when it changes (e.g., back/forward buttons)
   useEffect(() => {
     setSearchTerm(searchParams.get('q') || '');
     setInstrument(searchParams.get('instrument') || '');
@@ -70,7 +72,6 @@ const Search = () => {
     }
   }, [searchParams]);
 
-  // Debounce search term input and update URL
   useEffect(() => {
     const handler = setTimeout(() => {
       const newParams = new URLSearchParams(searchParams);
@@ -87,7 +88,6 @@ const Search = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, searchParams, setSearchParams]);
 
-  // Perform search whenever URL parameters change
   useEffect(() => {
     const performSearch = async () => {
       const q = searchParams.get('q') || '';
@@ -101,27 +101,44 @@ const Search = () => {
       const hasSearchParams = q || typeParam || stateParam || cityParam || instrumentParam || genreParam || goalParam;
 
       if (!hasSearchParams) {
-        setResults([]);
+        setAnnouncements([]);
+        setProfiles([]);
         return;
       }
 
       setIsLoading(true);
       const tagsToFilter = [instrumentParam, genreParam, goalParam].filter(Boolean);
 
-      const { data, error } = await supabase.rpc('search_announcements', {
-        p_search_term: q || null,
-        p_type: typeParam || null,
-        p_state: stateParam || null,
-        p_city: cityParam || null,
-        p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
-      });
+      const [announcementsResponse, profilesResponse] = await Promise.all([
+        supabase.rpc('search_announcements', {
+          p_search_term: q || null,
+          p_type: typeParam || null,
+          p_state: stateParam || null,
+          p_city: cityParam || null,
+          p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
+        }),
+        supabase.rpc('search_profiles', {
+          p_search_term: q || null,
+          p_state: stateParam || null,
+          p_city: cityParam || null,
+          p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
+        })
+      ]);
 
-      if (error) {
-        console.error("Error searching announcements:", error);
-        setResults([]);
+      if (announcementsResponse.error) {
+        console.error("Error searching announcements:", announcementsResponse.error);
+        setAnnouncements([]);
       } else {
-        setResults((data as any[] as AnnouncementWithProfile[]) || []);
+        setAnnouncements((announcementsResponse.data as any[] as AnnouncementWithProfile[]) || []);
       }
+
+      if (profilesResponse.error) {
+        console.error("Error searching profiles:", profilesResponse.error);
+        setProfiles([]);
+      } else {
+        setProfiles((profilesResponse.data as any[] as ProfileSearchResult[]) || []);
+      }
+
       setIsLoading(false);
     };
 
@@ -161,6 +178,20 @@ const Search = () => {
 
   const activeFiltersCount = ['type', 'state', 'city', 'instrument', 'genre', 'goal'].filter(key => searchParams.has(key)).length;
   const showSuggestions = searchParams.toString() === '';
+
+  const renderLoadingSkeleton = () => (
+    <div className="space-y-4 mt-4">
+      <Skeleton className="h-[150px] w-full rounded-xl" />
+      <Skeleton className="h-[150px] w-full rounded-xl" />
+    </div>
+  );
+
+  const renderNoResults = (message: string) => (
+    <div className="flex flex-col items-center justify-center h-64 text-center">
+      <p className="text-muted-foreground">{message}</p>
+      <p className="text-sm text-muted-foreground/80">Tente ajustar sua busca ou filtros.</p>
+    </div>
+  );
 
   return (
     <Layout title="Buscar">
@@ -284,34 +315,47 @@ const Search = () => {
         </Drawer>
       </div>
 
-      <div className="space-y-4">
-        {isLoading ? (
-          <>
-            <Skeleton className="h-[250px] w-full rounded-xl" />
-            <Skeleton className="h-[250px] w-full rounded-xl" />
-          </>
-        ) : showSuggestions ? (
-          <div className="text-center pt-8">
-            <p className="text-muted-foreground mb-4">Tente buscar por:</p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {suggestions.map((s) => (
-                <Button key={s} variant="outline" size="sm" onClick={() => handleSuggestionClick(s)}>
-                  {s}
-                </Button>
-              ))}
-            </div>
+      {showSuggestions ? (
+        <div className="text-center pt-8">
+          <p className="text-muted-foreground mb-4">Tente buscar por:</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {suggestions.map((s) => (
+              <Button key={s} variant="outline" size="sm" onClick={() => handleSuggestionClick(s)}>
+                {s}
+              </Button>
+            ))}
           </div>
-        ) : results.length > 0 ? (
-          results.map((announcement) => (
-            <AnnouncementCard key={announcement.id} announcement={announcement} />
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <p className="text-muted-foreground">Nenhum resultado encontrado.</p>
-            <p className="text-sm text-muted-foreground/80">Tente ajustar sua busca ou filtros.</p>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="announcements">
+              Anúncios <Badge variant={activeTab === 'announcements' ? 'default' : 'secondary'} className="ml-2">{announcements.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="profiles">
+              Perfis <Badge variant={activeTab === 'profiles' ? 'default' : 'secondary'} className="ml-2">{profiles.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="announcements">
+            {isLoading ? renderLoadingSkeleton() : announcements.length > 0 ? (
+              <div className="space-y-4 mt-4">
+                {announcements.map((announcement) => (
+                  <AnnouncementCard key={announcement.id} announcement={announcement} />
+                ))}
+              </div>
+            ) : renderNoResults("Nenhum anúncio encontrado.")}
+          </TabsContent>
+          <TabsContent value="profiles">
+            {isLoading ? renderLoadingSkeleton() : profiles.length > 0 ? (
+              <div className="space-y-4 mt-4">
+                {profiles.map((profile) => (
+                  <ProfileCard key={profile.id} profile={profile} />
+                ))}
+              </div>
+            ) : renderNoResults("Nenhum perfil encontrado.")}
+          </TabsContent>
+        </Tabs>
+      )}
     </Layout>
   );
 };
