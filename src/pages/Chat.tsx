@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { showError } from "@/utils/toast";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { TypingIndicator } from "@/components/TypingIndicator";
+import { ChatContext } from "@/components/ChatContext";
 
 type Message = {
   id: string;
@@ -36,6 +37,8 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [announcementContext, setAnnouncementContext] = useState<{ id: string, title: string } | null>(null);
+  const [showContext, setShowContext] = useState(true);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,7 +65,7 @@ const Chat = () => {
       if (announcementId) {
         const { data, error } = await supabase
           .from('announcements')
-          .select('user_id, profile:profiles!user_id(id, first_name, last_name, avatar_url)')
+          .select('id, title, user_id, profile:profiles!user_id(id, first_name, last_name, avatar_url)')
           .eq('id', announcementId)
           .single();
         
@@ -77,6 +80,7 @@ const Chat = () => {
             return;
         }
         setOtherUser(data.profile as OtherUser);
+        setAnnouncementContext({ id: data.id, title: data.title });
         participantId = data.user_id;
       } else if (userId) {
         const { data, error } = await supabase
@@ -317,6 +321,15 @@ const Chat = () => {
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
+          {showContext && messages.length === 0 && (announcementContext || userId) && (
+            <div className="mb-2">
+              <ChatContext
+                type={announcementContext ? 'announcement' : 'profile'}
+                data={announcementContext || otherUser}
+                onClose={() => setShowContext(false)}
+              />
+            </div>
+          )}
           <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
             <Input
               placeholder="Digite sua mensagem..."
