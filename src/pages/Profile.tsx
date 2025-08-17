@@ -103,9 +103,11 @@ const Profile = () => {
           </div>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/profile/edit">
                 <Edit className="w-4 h-4 mr-2" />
                 Editar Perfil
+              </Link>
             </Button>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="w-5 h-5" />

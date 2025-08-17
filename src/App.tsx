@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import AnnouncementDetails from "./pages/AnnouncementDetails";
 import Chat from "./pages/Chat";
 import ChatList from "./pages/ChatList";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/announcement/:id/edit" element={<EditAnnouncement />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
               <Route path="/chat" element={<ChatList />} />
               <Route path="/chat/:id" element={<Chat />} />
             </Route>
