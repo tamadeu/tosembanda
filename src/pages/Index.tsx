@@ -128,7 +128,7 @@ const Index = () => {
   };
 
   return (
-    <Layout title="MusiConnect">
+    <Layout title="To Sem Banda">
       <Tabs 
         defaultValue="musicians" 
         className="w-full" 
