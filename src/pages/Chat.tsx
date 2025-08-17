@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { mockAnnouncements } from "@/lib/mock-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { AnnouncementWithProfile } from "@/lib/types";
 
 type Message = {
   id: number;
@@ -15,7 +16,7 @@ type Message = {
 const Chat = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const announcement = mockAnnouncements.find((a) => a.id.toString() === id);
+  const [announcement, setAnnouncement] = useState<AnnouncementWithProfile | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([
     { id: 1, text: "Olá! Vi seu anúncio e tenho interesse.", sender: 'me' },
@@ -23,6 +24,19 @@ const Chat = () => {
     { id: 3, text: "Claro! Sou guitarrista há 5 anos, toco principalmente rock e blues.", sender: 'me' },
   ]);
   const [newMessage, setNewMessage] = useState("");
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      if (!id) return;
+      const { data } = await supabase
+        .from('announcements')
+        .select('*, profile:profiles(name, avatar_url)')
+        .eq('id', id)
+        .single();
+      setAnnouncement(data);
+    };
+    fetchAnnouncement();
+  }, [id]);
 
   const handleSendMessage = () => {
     if (newMessage.trim() === "") return;
@@ -38,11 +52,13 @@ const Chat = () => {
   if (!announcement) {
     return (
       <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col items-center justify-center">
-        <p>Usuário não encontrado.</p>
-        <Button onClick={() => navigate('/')} className="mt-4">Voltar</Button>
+        <p>Carregando...</p>
       </div>
     );
   }
+
+  const userName = announcement.profile?.name || "Usuário";
+  const userInitial = userName.charAt(0);
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -52,10 +68,10 @@ const Chat = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <Avatar className="w-10 h-10">
-            <AvatarImage src={announcement.user.avatarUrl} alt={announcement.user.name} />
-            <AvatarFallback>{announcement.user.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+            <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
-          <h1 className="text-lg font-semibold">{announcement.user.name}</h1>
+          <h1 className="text-lg font-semibold">{userName}</h1>
         </header>
 
         <main className="flex-1 p-4 space-y-4 overflow-y-auto pb-24">
@@ -66,8 +82,8 @@ const Chat = () => {
             >
               {msg.sender === 'other' && (
                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={announcement.user.avatarUrl} alt={announcement.user.name} />
-                    <AvatarFallback>{announcement.user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+                    <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               )}
               <div

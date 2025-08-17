@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/select";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { mockAnnouncements } from "@/lib/mock-data";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { states, City } from "@/lib/location-data";
+import { supabase } from "@/integrations/supabase/client";
+import { AnnouncementWithProfile } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
 const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
@@ -41,7 +43,8 @@ const Search = () => {
   const [cities, setCities] = useState<City[]>([]);
   
   const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "", type: "", state: "", city: "" });
-  const [results, setResults] = useState(mockAnnouncements);
+  const [results, setResults] = useState<AnnouncementWithProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const activeFiltersCount = Object.values(activeFilters).filter(Boolean).length;
 
@@ -75,24 +78,48 @@ const Search = () => {
   };
 
   useEffect(() => {
-    const filtered = mockAnnouncements.filter(ann => {
-      const searchTermMatch = searchTerm === "" ||
-        ann.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ann.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ann.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ann.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    const performSearch = async () => {
+      // Don't search if there's no term and no filters
+      if (searchTerm === "" && activeFiltersCount === 0) {
+        setResults([]);
+        return;
+      }
 
-      const instrumentMatch = activeFilters.instrument === "" || ann.tags.includes(activeFilters.instrument);
-      const genreMatch = activeFilters.genre === "" || ann.tags.includes(activeFilters.genre);
-      const goalMatch = activeFilters.goal === "" || ann.tags.includes(activeFilters.goal);
-      const typeMatch = activeFilters.type === "" || ann.type === activeFilters.type;
-      const stateMatch = activeFilters.state === "" || ann.location.state === activeFilters.state;
-      const cityMatch = activeFilters.city === "" || ann.location.city === activeFilters.city;
+      setIsLoading(true);
+      let query = supabase
+        .from('announcements')
+        .select('*, profile:profiles(name, avatar_url)')
+        .order('created_at', { ascending: false });
 
-      return searchTermMatch && instrumentMatch && genreMatch && goalMatch && typeMatch && stateMatch && cityMatch;
-    });
-    setResults(filtered);
-  }, [searchTerm, activeFilters]);
+      if (searchTerm) {
+        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      if (activeFilters.type) query = query.eq('type', activeFilters.type);
+      if (activeFilters.state) query = query.eq('location->>state', activeFilters.state);
+      if (activeFilters.city) query = query.eq('location->>city', activeFilters.city);
+      
+      const tagsToFilter = [activeFilters.instrument, activeFilters.genre, activeFilters.goal].filter(Boolean);
+      if (tagsToFilter.length > 0) {
+        query = query.contains('tags', tagsToFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error searching announcements:", error);
+        setResults([]);
+      } else {
+        setResults(data || []);
+      }
+      setIsLoading(false);
+    };
+
+    const debounceTimer = setTimeout(() => {
+      performSearch();
+    }, 500); // Add a debounce to avoid searching on every keystroke
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, activeFilters, activeFiltersCount]);
 
   const showSuggestions = searchTerm === "" && activeFiltersCount === 0;
 
@@ -219,7 +246,12 @@ const Search = () => {
       </div>
 
       <div className="space-y-4">
-        {showSuggestions ? (
+        {isLoading ? (
+          <>
+            <Skeleton className="h-[250px] w-full rounded-xl" />
+            <Skeleton className="h-[250px] w-full rounded-xl" />
+          </>
+        ) : showSuggestions ? (
           <div className="text-center pt-8">
             <p className="text-muted-foreground mb-4">Tente buscar por:</p>
             <div className="flex flex-wrap gap-2 justify-center">

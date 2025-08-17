@@ -1,29 +1,77 @@
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { mockAnnouncements } from "@/lib/mock-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, MapPin, MessageSquare } from "lucide-react";
-import { Layout } from "@/components/Layout";
+import { supabase } from "@/integrations/supabase/client";
+import { AnnouncementWithProfile } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AnnouncementDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const announcement = mockAnnouncements.find((a) => a.id.toString() === id);
+  const [announcement, setAnnouncement] = useState<AnnouncementWithProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*, profile:profiles(name, avatar_url)')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching announcement details:", error);
+      } else {
+        setAnnouncement(data);
+      }
+      setLoading(false);
+    };
+
+    fetchAnnouncement();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-md mx-auto min-h-screen p-4 space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </div>
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
 
   if (!announcement) {
     return (
-      <Layout title="Anúncio não encontrado">
+      <div className="w-full max-w-md mx-auto min-h-screen flex flex-col items-center justify-center p-4">
         <div className="text-center">
           <p>O anúncio que você está procurando não existe ou foi removido.</p>
           <Button asChild className="mt-4">
             <Link to="/">Voltar para o Início</Link>
           </Button>
         </div>
-      </Layout>
+      </div>
     );
   }
+
+  const userName = announcement.profile?.name || "Usuário Anônimo";
+  const userInitial = userName.charAt(0).toUpperCase();
+  const tags = announcement.tags || [];
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -40,16 +88,18 @@ const AnnouncementDetails = () => {
             <CardHeader className="p-0">
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={announcement.user.avatarUrl} alt={announcement.user.name} />
-                  <AvatarFallback>{announcement.user.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+                  <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <CardTitle className="text-lg font-bold">{announcement.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{announcement.user.name}</p>
-                  <div className="flex items-center text-xs text-muted-foreground mt-1">
-                    <MapPin className="w-3 h-3 mr-1" />
-                    <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
-                  </div>
+                  <p className="text-sm text-muted-foreground">{userName}</p>
+                  {announcement.location && (
+                    <div className="flex items-center text-xs text-muted-foreground mt-1">
+                      <MapPin className="w-3 h-3 mr-1" />
+                      <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -63,7 +113,7 @@ const AnnouncementDetails = () => {
               <CardTitle>Habilidades e Interesses</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              {announcement.tags.map((tag) => (
+              {tags.map((tag) => (
                 <Badge key={tag} variant="secondary">
                   {tag}
                 </Badge>
