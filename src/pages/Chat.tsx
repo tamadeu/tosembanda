@@ -217,7 +217,7 @@ const Chat = () => {
       content: content,
     };
 
-    if (messages.length === 0 && announcementId) {
+    if (announcementId) {
       messageData.announcement_id = announcementId;
     }
 
@@ -321,7 +321,7 @@ const Chat = () => {
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
-          {showContext && messages.length === 0 && (announcementContext || userId) && (
+          {showContext && (announcementContext || (userId && !announcementId)) && (
             <div className="mb-2">
               <ChatContext
                 type={announcementContext ? 'announcement' : 'profile'}
