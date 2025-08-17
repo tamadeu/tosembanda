@@ -30,7 +30,7 @@ const Chat = () => {
       if (!id) return;
       const { data } = await supabase
         .from('announcements')
-        .select('*, profile:profiles!user_id(name, avatar_url)')
+        .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
         .eq('id', id)
         .single();
       setAnnouncement(data);
@@ -57,7 +57,7 @@ const Chat = () => {
     );
   }
 
-  const userName = announcement.profile?.name || "Usuário";
+  const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário";
   const userInitial = userName.charAt(0);
 
   return (

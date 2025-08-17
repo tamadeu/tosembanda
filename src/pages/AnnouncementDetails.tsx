@@ -24,7 +24,7 @@ const AnnouncementDetails = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('announcements')
-        .select('*, profile:profiles!user_id(name, avatar_url)')
+        .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
         .eq('id', id)
         .single();
 
@@ -69,7 +69,7 @@ const AnnouncementDetails = () => {
     );
   }
 
-  const userName = announcement.profile?.name || "Usuário Anônimo";
+  const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário Anônimo";
   const userInitial = userName.charAt(0).toUpperCase();
   const tags = announcement.tags || [];
 
