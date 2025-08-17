@@ -12,6 +12,7 @@ import Search from "./pages/Search";
 import Profile from "./pages/Profile";
 import AnnouncementDetails from "./pages/AnnouncementDetails";
 import Chat from "./pages/Chat";
+import ChatList from "./pages/ChatList";
 import Announce from "./pages/Announce";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/announcement/:id/edit" element={<EditAnnouncement />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/chat" element={<ChatList />} />
               <Route path="/chat/:id" element={<Chat />} />
             </Route>
 
