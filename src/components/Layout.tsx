@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Search, PlusSquare, User, Bell, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { useNotifications } from "@/contexts/NotificationsContext";
+import { Badge } from "./ui/badge";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +20,7 @@ const navItems = [
 
 export const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -25,9 +28,14 @@ export const Layout = ({ children, title }: LayoutProps) => {
         <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center justify-center relative">
           <h1 className="text-xl font-bold text-center">{title}</h1>
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild className="relative">
               <Link to="/notifications">
                 <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs rounded-full">
+                    {unreadCount}
+                  </Badge>
+                )}
               </Link>
             </Button>
           </div>

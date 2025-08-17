@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNotifications } from "@/contexts/NotificationsContext";
 
 type Notification = {
   id: string;
@@ -92,6 +93,14 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
 const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const { unreadCount, markAllAsRead } = useNotifications();
+
+  useEffect(() => {
+    if (unreadCount > 0) {
+      markAllAsRead();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const fetchNotifications = async () => {

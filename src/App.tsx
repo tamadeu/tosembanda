@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationsProvider } from "./contexts/NotificationsContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Index from "./pages/Index";
@@ -30,27 +31,29 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/update-password" element={<UpdatePassword />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/announcement/:id" element={<AnnouncementDetails />} />
-            <Route path="/user/:id" element={<PublicProfile />} />
-            
-            {/* Rotas Protegidas */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/announce" element={<Announce />} />
-              <Route path="/announcement/:id/edit" element={<EditAnnouncement />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/edit" element={<EditProfile />} />
-              <Route path="/chat" element={<ChatList />} />
-              <Route path="/chat/:id" element={<Chat />} />
-            </Route>
+          <NotificationsProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/announcement/:id" element={<AnnouncementDetails />} />
+              <Route path="/user/:id" element={<PublicProfile />} />
+              
+              {/* Rotas Protegidas */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/announce" element={<Announce />} />
+                <Route path="/announcement/:id/edit" element={<EditAnnouncement />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/edit" element={<EditProfile />} />
+                <Route path="/chat" element={<ChatList />} />
+                <Route path="/chat/:id" element={<Chat />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </NotificationsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
