@@ -5,11 +5,13 @@ import { useAuth } from './AuthContext';
 interface NotificationsContextType {
   unreadCount: number;
   markAllAsRead: () => void;
+  markOneAsRead: (notificationId: string) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType>({
   unreadCount: 0,
   markAllAsRead: () => {},
+  markOneAsRead: () => {},
 });
 
 export const NotificationsProvider = ({ children }: { children: React.ReactNode }) => {
@@ -56,7 +58,7 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
   const markAllAsRead = useCallback(async () => {
     if (!user) return;
     
-    setUnreadCount(0); // Otimista: zera o contador na UI imediatamente
+    setUnreadCount(0);
 
     const { error } = await supabase
       .from('notifications')
@@ -66,12 +68,29 @@ export const NotificationsProvider = ({ children }: { children: React.ReactNode 
 
     if (error) {
       console.error("Error marking notifications as read:", error);
-      fetchUnreadCount(); // Em caso de erro, busca o valor real do banco
+      fetchUnreadCount();
+    }
+  }, [user, fetchUnreadCount]);
+
+  const markOneAsRead = useCallback(async (notificationId: string) => {
+    if (!user) return;
+
+    setUnreadCount((prev) => (prev > 0 ? prev - 1 : 0));
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId)
+      .eq('is_read', false);
+
+    if (error) {
+      console.error("Error marking notification as read:", error);
+      fetchUnreadCount();
     }
   }, [user, fetchUnreadCount]);
 
   return (
-    <NotificationsContext.Provider value={{ unreadCount, markAllAsRead }}>
+    <NotificationsContext.Provider value={{ unreadCount, markAllAsRead, markOneAsRead }}>
       {children}
     </NotificationsContext.Provider>
   );

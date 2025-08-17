@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { BellRing, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNotifications } from "@/contexts/NotificationsContext";
+import { cn } from "@/lib/utils";
 
 type Notification = {
   id: string;
@@ -62,15 +64,18 @@ const VisitorAvatar = ({ visitorId }: { visitorId: string }) => {
   );
 };
 
-const NotificationItem = ({ notification }: { notification: Notification }) => {
+const NotificationItem = ({ notification, onMarkAsRead }: { notification: Notification; onMarkAsRead: (id: string) => void; }) => {
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR });
   
   const content = (
-    <div className="flex items-start gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors cursor-pointer">
+    <div className={cn(
+      "flex items-center gap-4 p-4 rounded-lg transition-all",
+      notification.is_read ? "opacity-60" : "bg-muted/30"
+    )}>
       {notification.type === 'profile_view' && notification.metadata.visitor_id ? (
         <VisitorAvatar visitorId={notification.metadata.visitor_id} />
       ) : (
-        <div className="w-10 h-10 flex items-center justify-center bg-primary/10 rounded-full">
+        <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-primary/10 rounded-full">
           <NotificationIcon type={notification.type} />
         </div>
       )}
@@ -78,29 +83,40 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
         <p className="text-sm">{notification.message}</p>
         <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
       </div>
+      {!notification.is_read && (
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex-shrink-0"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onMarkAsRead(notification.id);
+          }}
+        >
+          Lida
+        </Button>
+      )}
     </div>
   );
 
-  if (notification.type === 'profile_view' && notification.metadata.visitor_id) {
-    return <Link to={`/user/${notification.metadata.visitor_id}`}>{content}</Link>;
-  }
-  if (notification.type === 'new_announcement' && notification.metadata.announcement_id) {
-    return <Link to={`/announcement/${notification.metadata.announcement_id}`}>{content}</Link>;
-  }
-  return content;
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    if (notification.type === 'profile_view' && notification.metadata.visitor_id) {
+      return <Link to={`/user/${notification.metadata.visitor_id}`}>{children}</Link>;
+    }
+    if (notification.type === 'new_announcement' && notification.metadata.announcement_id) {
+      return <Link to={`/announcement/${notification.metadata.announcement_id}`}>{children}</Link>;
+    }
+    return <>{children}</>;
+  };
+
+  return <Wrapper>{content}</Wrapper>;
 };
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const { unreadCount, markAllAsRead } = useNotifications();
-
-  useEffect(() => {
-    if (unreadCount > 0) {
-      markAllAsRead();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { unreadCount, markAllAsRead, markOneAsRead } = useNotifications();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -121,6 +137,22 @@ const Notifications = () => {
     fetchNotifications();
   }, []);
 
+  const handleMarkOneAsRead = (notificationId: string) => {
+    markOneAsRead(notificationId);
+    setNotifications(currentNotifications => 
+      currentNotifications.map(n => 
+        n.id === notificationId ? { ...n, is_read: true } : n
+      )
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
+    setNotifications(currentNotifications => 
+      currentNotifications.map(n => ({ ...n, is_read: true }))
+    );
+  };
+
   if (loading) {
     return (
       <Layout title="Notificações">
@@ -135,10 +167,21 @@ const Notifications = () => {
 
   return (
     <Layout title="Notificações">
+      {notifications.length > 0 && unreadCount > 0 && (
+        <div className="mb-4">
+          <Button variant="outline" size="sm" onClick={handleMarkAllAsRead}>
+            Marcar todas como lidas
+          </Button>
+        </div>
+      )}
       {notifications.length > 0 ? (
         <div className="space-y-2">
           {notifications.map((notification) => (
-            <NotificationItem key={notification.id} notification={notification} />
+            <NotificationItem 
+              key={notification.id} 
+              notification={notification} 
+              onMarkAsRead={handleMarkOneAsRead} 
+            />
           ))}
         </div>
       ) : (
