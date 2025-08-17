@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,66 +34,85 @@ const goals = ["Entrar em uma banda", "Show/Evento", "Gravação", "Freelancer"]
 const suggestions = ["Vocalista", "Guitarra Rock", "Bateria Metal", "Baixo MPB", "Freelancer"];
 
 const Search = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [instrument, setInstrument] = useState("");
-  const [genre, setGenre] = useState("");
-  const [goal, setGoal] = useState("");
-  const [type, setType] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // State for UI elements (search input and drawer filters)
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || "");
+  const [instrument, setInstrument] = useState(searchParams.get('instrument') || "");
+  const [genre, setGenre] = useState(searchParams.get('genre') || "");
+  const [goal, setGoal] = useState(searchParams.get('goal') || "");
+  const [type, setType] = useState(searchParams.get('type') || "");
+  const [state, setState] = useState(searchParams.get('state') || "");
+  const [city, setCity] = useState(searchParams.get('city') || "");
   const [cities, setCities] = useState<City[]>([]);
   
-  const [activeFilters, setActiveFilters] = useState({ instrument: "", genre: "", goal: "", type: "", state: "", city: "" });
   const [results, setResults] = useState<AnnouncementWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const activeFiltersCount = Object.values(activeFilters).filter(Boolean).length;
-
+  // Sync UI state from URL when it changes (e.g., back/forward buttons)
   useEffect(() => {
-    if (state) {
-      const stateData = states.find(s => s.sigla === state);
-      setCities(stateData ? stateData.cidades : []);
-      setCity("");
+    setSearchTerm(searchParams.get('q') || '');
+    setInstrument(searchParams.get('instrument') || '');
+    setGenre(searchParams.get('genre') || '');
+    setGoal(searchParams.get('goal') || '');
+    setType(searchParams.get('type') || '');
+    const stateParam = searchParams.get('state') || '';
+    setState(stateParam);
+    if (stateParam) {
+        const stateData = states.find(s => s.sigla === stateParam);
+        if (stateData) {
+            setCities(stateData.cidades);
+            setCity(searchParams.get('city') || '');
+        }
     } else {
-      setCities([]);
-      setCity("");
+        setCities([]);
+        setCity('');
     }
-  }, [state]);
+  }, [searchParams]);
 
-  const handleApplyFilters = () => {
-    setActiveFilters({ instrument, genre, goal, type, state, city });
-  };
+  // Debounce search term input and update URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const newParams = new URLSearchParams(searchParams);
+      if (searchTerm) {
+        newParams.set('q', searchTerm);
+      } else {
+        newParams.delete('q');
+      }
+      if (newParams.toString() !== searchParams.toString()) {
+        setSearchParams(newParams, { replace: true });
+      }
+    }, 500);
 
-  const clearFilters = () => {
-    setInstrument("");
-    setGenre("");
-    setGoal("");
-    setType("");
-    setState("");
-    setCity("");
-    setActiveFilters({ instrument: "", genre: "", goal: "", type: "", state: "", city: "" });
-  };
+    return () => clearTimeout(handler);
+  }, [searchTerm, searchParams, setSearchParams]);
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setSearchTerm(suggestion);
-  };
-
+  // Perform search whenever URL parameters change
   useEffect(() => {
     const performSearch = async () => {
-      if (searchTerm === "" && activeFiltersCount === 0) {
+      const q = searchParams.get('q') || '';
+      const typeParam = searchParams.get('type') || '';
+      const stateParam = searchParams.get('state') || '';
+      const cityParam = searchParams.get('city') || '';
+      const instrumentParam = searchParams.get('instrument') || '';
+      const genreParam = searchParams.get('genre') || '';
+      const goalParam = searchParams.get('goal') || '';
+
+      const hasSearchParams = q || typeParam || stateParam || cityParam || instrumentParam || genreParam || goalParam;
+
+      if (!hasSearchParams) {
         setResults([]);
         return;
       }
 
       setIsLoading(true);
-      
-      const tagsToFilter = [activeFilters.instrument, activeFilters.genre, activeFilters.goal].filter(Boolean);
+      const tagsToFilter = [instrumentParam, genreParam, goalParam].filter(Boolean);
 
       const { data, error } = await supabase.rpc('search_announcements', {
-        p_search_term: searchTerm || null,
-        p_type: activeFilters.type || null,
-        p_state: activeFilters.state || null,
-        p_city: activeFilters.city || null,
+        p_search_term: q || null,
+        p_type: typeParam || null,
+        p_state: stateParam || null,
+        p_city: cityParam || null,
         p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
       });
 
@@ -105,14 +125,42 @@ const Search = () => {
       setIsLoading(false);
     };
 
-    const debounceTimer = setTimeout(() => {
-      performSearch();
-    }, 500);
+    performSearch();
+  }, [searchParams]);
 
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm, activeFilters, activeFiltersCount]);
+  const handleApplyFilters = () => {
+    const newParams = new URLSearchParams(searchParams);
+    const updateParam = (key: string, value: string) => value ? newParams.set(key, value) : newParams.delete(key);
+    
+    updateParam('type', type);
+    updateParam('state', state);
+    updateParam('city', city);
+    updateParam('instrument', instrument);
+    updateParam('genre', genre);
+    updateParam('goal', goal);
 
-  const showSuggestions = searchTerm === "" && activeFiltersCount === 0;
+    setSearchParams(newParams);
+  };
+
+  const clearFilters = () => {
+    setInstrument("");
+    setGenre("");
+    setGoal("");
+    setType("");
+    setState("");
+    setCity("");
+
+    const newParams = new URLSearchParams(searchParams);
+    ['type', 'state', 'city', 'instrument', 'genre', 'goal'].forEach(key => newParams.delete(key));
+    setSearchParams(newParams);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchTerm(suggestion);
+  };
+
+  const activeFiltersCount = ['type', 'state', 'city', 'instrument', 'genre', 'goal'].filter(key => searchParams.has(key)).length;
+  const showSuggestions = searchParams.toString() === '';
 
   return (
     <Layout title="Buscar">
