@@ -6,14 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, PlusCircle } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { AnnouncementWithProfile } from "@/lib/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PublicProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +29,6 @@ const PublicProfile = () => {
 
       setLoading(true);
 
-      // Busca o perfil e os anúncios em paralelo
       const [profileResponse, announcementsResponse] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', id).single(),
         supabase.from('announcements').select('*, profile:profiles!user_id(first_name, last_name, avatar_url)').eq('user_id', id).order('created_at', { ascending: false })
@@ -36,7 +37,6 @@ const PublicProfile = () => {
       if (profileResponse.error || !profileResponse.data) {
         console.error("Error fetching profile:", profileResponse.error);
         setLoading(false);
-        // Se o perfil não for encontrado, podemos redirecionar ou mostrar uma mensagem
         return;
       }
       
@@ -47,10 +47,17 @@ const PublicProfile = () => {
       }
 
       setLoading(false);
+
+      // Se houver um usuário logado e ele não for o dono do perfil, cria a notificação.
+      if (currentUser && currentUser.id !== id) {
+        await supabase.functions.invoke('create-profile-view-notification', {
+          body: { profileOwnerId: id },
+        });
+      }
     };
 
     fetchPublicProfile();
-  }, [id, navigate]);
+  }, [id, navigate, currentUser]);
 
   if (loading) {
     return (
