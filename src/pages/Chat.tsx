@@ -161,7 +161,11 @@ const Chat = () => {
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          setMessages((prevMessages) => [...prevMessages, payload.new as Message]);
+          // Only add the message if it's not from the current user
+          // to avoid duplicates from the optimistic update.
+          if (payload.new.sender_id !== currentUser?.id) {
+            setMessages((prevMessages) => [...prevMessages, payload.new as Message]);
+          }
         }
       )
       .subscribe();
@@ -169,12 +173,21 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId]);
+  }, [conversationId, currentUser?.id]);
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === "" || !currentUser || !otherUser || !conversationId) return;
 
     const content = newMessage.trim();
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: content,
+      sender_id: currentUser.id,
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages(prevMessages => [...prevMessages, tempMessage]);
     setNewMessage("");
 
     const messageData: any = {
@@ -184,16 +197,24 @@ const Chat = () => {
       content: content,
     };
 
-    // If this is the first message and it's from an announcement, tag it.
     if (messages.length === 0 && announcementId) {
       messageData.announcement_id = announcementId;
     }
 
-    const { error } = await supabase.from('messages').insert(messageData);
+    const { data: savedMessage, error } = await supabase
+      .from('messages')
+      .insert(messageData)
+      .select()
+      .single();
 
     if (error) {
       showError("Não foi possível enviar a mensagem.");
-      setNewMessage(content); // Restore message on error
+      setMessages(prevMessages => prevMessages.filter(m => m.id !== tempMessage.id));
+      setNewMessage(content);
+    } else if (savedMessage) {
+      setMessages(prevMessages =>
+        prevMessages.map(m => m.id === tempMessage.id ? savedMessage as Message : m)
+      );
     }
   };
 
