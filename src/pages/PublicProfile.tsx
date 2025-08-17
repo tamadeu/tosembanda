@@ -106,7 +106,7 @@ const PublicProfile = () => {
         </div>
         {!isOwnProfile && currentUser && (
           <Button asChild className="mt-2">
-            <Link to={`/chat/user/${id}`}>
+            <Link to={`/chat/user/${id}?source=profile`}>
               <MessageSquare className="w-4 h-4 mr-2" />
               Entrar em contato
             </Link>

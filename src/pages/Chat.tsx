@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ type OtherUser = {
 const Chat = () => {
   const { announcementId, userId } = useParams<{ announcementId?: string, userId?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
   
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
@@ -202,12 +203,13 @@ const Chat = () => {
     });
 
     const content = newMessage.trim();
+    const isFirstMessage = messages.length === 0;
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       content: content,
       sender_id: currentUser.id,
       created_at: new Date().toISOString(),
-      announcement_id: messages.length === 0 ? announcementId || null : null,
+      announcement_id: isFirstMessage ? announcementId || null : null,
     };
 
     setMessages(prevMessages => [...prevMessages, tempMessage]);
@@ -218,7 +220,7 @@ const Chat = () => {
       sender_id: currentUser.id,
       receiver_id: otherUser.id,
       content: content,
-      announcement_id: messages.length === 0 ? announcementId || null : null,
+      announcement_id: isFirstMessage ? announcementId || null : null,
     };
 
     const { data: savedMessage, error } = await supabase
@@ -235,6 +237,9 @@ const Chat = () => {
       setMessages(prevMessages =>
         prevMessages.map(m => m.id === tempMessage.id ? savedMessage as Message : m)
       );
+      if (searchParams.get('source')) {
+        navigate(`/chat/user/${otherUser.id}`, { replace: true });
+      }
     }
   };
 
@@ -278,6 +283,7 @@ const Chat = () => {
 
   const userName = [otherUser.first_name, otherUser.last_name].filter(Boolean).join(' ') || "Usuário";
   const userInitial = userName.charAt(0).toUpperCase();
+  const showFooterContext = showContext && searchParams.get('source') && messages.length === 0;
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -325,7 +331,7 @@ const Chat = () => {
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
-          {showContext && messages.length === 0 && (announcementContext || (userId && !announcementId)) && (
+          {showFooterContext && (announcementContext || (userId && !announcementId)) && (
             <div className="mb-2">
               <ChatContext
                 type={announcementContext ? 'announcement' : 'profile'}
