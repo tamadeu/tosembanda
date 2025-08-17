@@ -24,7 +24,7 @@ const AnnouncementDetails = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('announcements')
-        .select('*, profile:profiles(name, avatar_url)')
+        .select('*, profile:profiles!user_id(name, avatar_url)')
         .eq('id', id)
         .single();
 

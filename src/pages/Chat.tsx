@@ -30,7 +30,7 @@ const Chat = () => {
       if (!id) return;
       const { data } = await supabase
         .from('announcements')
-        .select('*, profile:profiles(name, avatar_url)')
+        .select('*, profile:profiles!user_id(name, avatar_url)')
         .eq('id', id)
         .single();
       setAnnouncement(data);

@@ -88,7 +88,7 @@ const Search = () => {
       setIsLoading(true);
       let query = supabase
         .from('announcements')
-        .select('*, profile:profiles(name, avatar_url)')
+        .select('*, profile:profiles!user_id(name, avatar_url)')
         .order('created_at', { ascending: false });
 
       if (searchTerm) {
