@@ -7,39 +7,54 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, LogOut, MapPin, PlusCircle, Settings } from "lucide-react";
+import { Edit, LogOut, MapPin, PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
-import { Announcement } from "@/lib/mock-data"; // Temporário
+import { AnnouncementWithProfile } from "@/lib/types";
 
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]); // Temporário
+  const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndAnnouncements = async () => {
       if (!user) return;
 
       setLoading(true);
-      const { data, error } = await supabase
+      
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
       } else {
-        setProfile(data);
+        setProfile(profileData);
       }
+
+      const { data: announcementsData, error: announcementsError } = await supabase
+        .from('announcements')
+        .select('*, profile:profiles!user_id(name, avatar_url)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (announcementsError) {
+        console.error("Error fetching user announcements:", announcementsError);
+      } else {
+        setAnnouncements(announcementsData as AnnouncementWithProfile[]);
+      }
+
       setLoading(false);
     };
 
-    fetchProfile();
-    // TODO: Fetch user announcements from Supabase
+    if (user) {
+      fetchProfileAndAnnouncements();
+    }
   }, [user]);
 
   const handleLogout = async () => {
