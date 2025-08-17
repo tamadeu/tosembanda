@@ -19,6 +19,10 @@ type Message = {
   sender_id: string;
   created_at: string;
   announcement_id: string | null;
+  announcement: {
+    id: string;
+    title: string;
+  } | null;
 };
 
 type OtherUser = {
@@ -31,7 +35,7 @@ type OtherUser = {
 const Chat = () => {
   const { announcementId, userId } = useParams<{ announcementId?: string, userId?: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
   
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
@@ -146,7 +150,7 @@ const Chat = () => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, announcement:announcements(id, title)')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -203,13 +207,15 @@ const Chat = () => {
     });
 
     const content = newMessage.trim();
-    const isFirstMessage = messages.length === 0;
+    const isContextualMessage = searchParams.get('source') === 'announcement';
+    
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       content: content,
       sender_id: currentUser.id,
       created_at: new Date().toISOString(),
-      announcement_id: isFirstMessage ? announcementId || null : null,
+      announcement_id: isContextualMessage ? announcementId || null : null,
+      announcement: isContextualMessage ? announcementContext : null,
     };
 
     setMessages(prevMessages => [...prevMessages, tempMessage]);
@@ -220,13 +226,13 @@ const Chat = () => {
       sender_id: currentUser.id,
       receiver_id: otherUser.id,
       content: content,
-      announcement_id: isFirstMessage ? announcementId || null : null,
+      announcement_id: isContextualMessage ? announcementId || null : null,
     };
 
     const { data: savedMessage, error } = await supabase
       .from('messages')
       .insert(messageData)
-      .select()
+      .select('*, announcement:announcements(id, title)')
       .single();
 
     if (error) {
@@ -238,7 +244,9 @@ const Chat = () => {
         prevMessages.map(m => m.id === tempMessage.id ? savedMessage as Message : m)
       );
       if (searchParams.get('source')) {
-        navigate(`/chat/user/${otherUser.id}`, { replace: true });
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('source');
+        setSearchParams(newParams, { replace: true });
       }
     }
   };
@@ -283,7 +291,7 @@ const Chat = () => {
 
   const userName = [otherUser.first_name, otherUser.last_name].filter(Boolean).join(' ') || "Usuário";
   const userInitial = userName.charAt(0).toUpperCase();
-  const showFooterContext = showContext && searchParams.get('source') && messages.length === 0;
+  const showFooterContext = showContext && searchParams.get('source');
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -300,32 +308,37 @@ const Chat = () => {
         </header>
 
         <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {messages.map((msg, index) => (
-            <div key={msg.id}>
-              {index === 0 && msg.announcement_id && announcementContext && (
-                <MessageContextCard announcement={announcementContext} />
-              )}
-              <div
-                className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.sender_id !== currentUser?.id && (
-                   <Avatar className="w-8 h-8">
-                      <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
-                      <AvatarFallback>{userInitial}</AvatarFallback>
-                  </Avatar>
+          {messages.map((msg, index) => {
+            const prevMessage = index > 0 ? messages[index - 1] : null;
+            const showContextCard = msg.announcement && (!prevMessage || prevMessage.announcement_id !== msg.announcement_id);
+            
+            return (
+              <div key={msg.id}>
+                {showContextCard && (
+                  <MessageContextCard announcement={msg.announcement!} />
                 )}
                 <div
-                  className={`max-w-xs md:max-w-md p-3 rounded-lg ${
-                    msg.sender_id === currentUser?.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
+                  className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="text-sm">{msg.content}</p>
+                  {msg.sender_id !== currentUser?.id && (
+                     <Avatar className="w-8 h-8">
+                        <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
+                        <AvatarFallback>{userInitial}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`max-w-xs md:max-w-md p-3 rounded-lg ${
+                      msg.sender_id === currentUser?.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.content}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {isTyping && <TypingIndicator />}
           <div ref={messagesEndRef} />
         </main>
