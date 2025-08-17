@@ -79,44 +79,35 @@ const Search = () => {
 
   useEffect(() => {
     const performSearch = async () => {
-      // Don't search if there's no term and no filters
       if (searchTerm === "" && activeFiltersCount === 0) {
         setResults([]);
         return;
       }
 
       setIsLoading(true);
-      let query = supabase
-        .from('announcements')
-        .select('*, profile:profiles!user_id(name, avatar_url)')
-        .order('created_at', { ascending: false });
-
-      if (searchTerm) {
-        query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-      }
-      if (activeFilters.type) query = query.eq('type', activeFilters.type);
-      if (activeFilters.state) query = query.eq('location->>state', activeFilters.state);
-      if (activeFilters.city) query = query.eq('location->>city', activeFilters.city);
       
       const tagsToFilter = [activeFilters.instrument, activeFilters.genre, activeFilters.goal].filter(Boolean);
-      if (tagsToFilter.length > 0) {
-        query = query.contains('tags', tagsToFilter);
-      }
 
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('search_announcements', {
+        p_search_term: searchTerm || null,
+        p_type: activeFilters.type || null,
+        p_state: activeFilters.state || null,
+        p_city: activeFilters.city || null,
+        p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
+      });
 
       if (error) {
         console.error("Error searching announcements:", error);
         setResults([]);
       } else {
-        setResults(data || []);
+        setResults((data as any[] as AnnouncementWithProfile[]) || []);
       }
       setIsLoading(false);
     };
 
     const debounceTimer = setTimeout(() => {
       performSearch();
-    }, 500); // Add a debounce to avoid searching on every keystroke
+    }, 500);
 
     return () => clearTimeout(debounceTimer);
   }, [searchTerm, activeFilters, activeFiltersCount]);
