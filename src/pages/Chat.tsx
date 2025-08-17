@@ -23,6 +23,12 @@ type Message = {
     id: string;
     title: string;
   } | null;
+  context_profile_id: string | null;
+  context_profile: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 };
 
 type OtherUser = {
@@ -150,7 +156,7 @@ const Chat = () => {
     const fetchMessages = async () => {
       const { data, error } = await supabase
         .from('messages')
-        .select('*, announcement:announcements(id, title)')
+        .select('*, announcement:announcements(id, title), context_profile:profiles!context_profile_id(id, first_name, last_name)')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -207,15 +213,18 @@ const Chat = () => {
     });
 
     const content = newMessage.trim();
-    const isContextualMessage = searchParams.get('source') === 'announcement';
+    const source = searchParams.get('source');
+    const isContextualMessage = !!source;
     
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       content: content,
       sender_id: currentUser.id,
       created_at: new Date().toISOString(),
-      announcement_id: isContextualMessage ? announcementId || null : null,
-      announcement: isContextualMessage ? announcementContext : null,
+      announcement_id: source === 'announcement' ? announcementId || null : null,
+      announcement: source === 'announcement' ? announcementContext : null,
+      context_profile_id: source === 'profile' ? otherUser.id : null,
+      context_profile: source === 'profile' ? otherUser : null,
     };
 
     setMessages(prevMessages => [...prevMessages, tempMessage]);
@@ -226,13 +235,14 @@ const Chat = () => {
       sender_id: currentUser.id,
       receiver_id: otherUser.id,
       content: content,
-      announcement_id: isContextualMessage ? announcementId || null : null,
+      announcement_id: isContextualMessage && source === 'announcement' ? announcementId : null,
+      context_profile_id: isContextualMessage && source === 'profile' ? otherUser.id : null,
     };
 
     const { data: savedMessage, error } = await supabase
       .from('messages')
       .insert(messageData)
-      .select('*, announcement:announcements(id, title)')
+      .select('*, announcement:announcements(id, title), context_profile:profiles!context_profile_id(id, first_name, last_name)')
       .single();
 
     if (error) {
@@ -308,14 +318,13 @@ const Chat = () => {
         </header>
 
         <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-          {messages.map((msg, index) => {
-            const prevMessage = index > 0 ? messages[index - 1] : null;
-            const showContextCard = msg.announcement && (!prevMessage || prevMessage.announcement_id !== msg.announcement_id);
+          {messages.map((msg) => {
+            const showContextCard = msg.announcement || msg.context_profile;
             
             return (
               <div key={msg.id}>
                 {showContextCard && (
-                  <MessageContextCard announcement={msg.announcement!} />
+                  <MessageContextCard announcement={msg.announcement} profile={msg.context_profile} />
                 )}
                 <div
                   className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
