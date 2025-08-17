@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError } from "@/utils/toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { TypingIndicator } from "@/components/TypingIndicator";
 
 type Message = {
   id: string;
@@ -33,6 +35,10 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -41,7 +47,7 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isTyping]);
 
   useEffect(() => {
     const setupConversation = async () => {
@@ -53,7 +59,6 @@ const Chat = () => {
 
       let participantId: string | undefined = userId;
 
-      // 1. Determine the other participant
       if (announcementId) {
         const { data, error } = await supabase
           .from('announcements')
@@ -93,7 +98,6 @@ const Chat = () => {
 
       if (!participantId) return;
 
-      // 2. Find or create a conversation between the two users
       const { data: existingConversation } = await supabase
         .from('conversations')
         .select('id')
@@ -129,7 +133,6 @@ const Chat = () => {
     }
   }, [announcementId, userId, navigate, currentUser]);
 
-  // 3. Fetch messages and subscribe to realtime updates
   useEffect(() => {
     if (!conversationId) return;
 
@@ -150,8 +153,10 @@ const Chat = () => {
 
     fetchMessages();
 
-    const channel = supabase
-      .channel(`chat:${conversationId}`)
+    const channel = supabase.channel(`chat:${conversationId}`);
+    channelRef.current = channel;
+
+    channel
       .on(
         'postgres_changes',
         {
@@ -161,25 +166,36 @@ const Chat = () => {
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          // Only add the message if it's not from the current user
-          // to avoid duplicates from the optimistic update.
           if (payload.new.sender_id !== currentUser?.id) {
             setMessages((prevMessages) => [...prevMessages, payload.new as Message]);
           }
         }
       )
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload.senderId !== currentUser?.id) {
+          setIsTyping(payload.payload.isTyping);
+        }
+      })
       .subscribe();
 
     return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       supabase.removeChannel(channel);
+      channelRef.current = null;
     };
   }, [conversationId, currentUser?.id]);
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === "" || !currentUser || !otherUser || !conversationId) return;
 
-    const content = newMessage.trim();
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { isTyping: false, senderId: currentUser.id },
+    });
 
+    const content = newMessage.trim();
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       content: content,
@@ -216,6 +232,28 @@ const Chat = () => {
         prevMessages.map(m => m.id === tempMessage.id ? savedMessage as Message : m)
       );
     }
+  };
+
+  const handleTyping = () => {
+    if (!channelRef.current || !currentUser) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { isTyping: true, senderId: currentUser.id },
+    });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { isTyping: false, senderId: currentUser.id },
+      });
+    }, 2000);
   };
 
   if (loading || !otherUser) {
@@ -274,6 +312,7 @@ const Chat = () => {
               </div>
             </div>
           ))}
+          {isTyping && <TypingIndicator />}
           <div ref={messagesEndRef} />
         </main>
 
@@ -282,7 +321,10 @@ const Chat = () => {
             <Input
               placeholder="Digite sua mensagem..."
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+              }}
             />
             <Button type="submit" size="icon">
               <Send className="w-5 h-5" />
