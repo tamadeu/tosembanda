@@ -94,36 +94,26 @@ const Chat = () => {
 
       if (!participantId) return;
 
-      // 2. Find or create a conversation
-      const query = supabase
+      // 2. Find the most recent conversation between the two users
+      const { data: existingConversation, error: findError } = await supabase
         .from('conversations')
         .select('id')
-        .or(`and(participant1_id.eq.${currentUser.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${currentUser.id})`);
-
-      if (annId) {
-        query.eq('announcement_id', annId);
-      } else {
-        query.is('announcement_id', null);
-      }
-
-      const { data: existingConversation, error: findError } = await query.maybeSingle();
-
-      if (findError) {
-        showError("Erro ao carregar a conversa.");
-        console.error(findError);
-        return;
-      }
+        .or(`and(participant1_id.eq.${currentUser.id},participant2_id.eq.${participantId}),and(participant1_id.eq.${participantId},participant2_id.eq.${currentUser.id})`)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       let convId;
       if (existingConversation) {
         convId = existingConversation.id;
       } else {
+        // If no conversation exists at all, create a new one.
         const { data: newConversation, error: createError } = await supabase
           .from('conversations')
           .insert({
             participant1_id: currentUser.id,
             participant2_id: participantId,
-            announcement_id: annId,
+            announcement_id: annId, // annId can be null
           })
           .select('id')
           .single();
