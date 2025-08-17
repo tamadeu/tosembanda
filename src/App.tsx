@@ -15,6 +15,7 @@ import Chat from "./pages/Chat";
 import Announce from "./pages/Announce";
 import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
+import EditAnnouncement from "./pages/EditAnnouncement";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             {/* Rotas Protegidas */}
             <Route element={<ProtectedRoute />}>
               <Route path="/announce" element={<Announce />} />
+              <Route path="/announcement/:id/edit" element={<EditAnnouncement />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/chat/:id" element={<Chat />} />

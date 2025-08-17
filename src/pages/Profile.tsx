@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, LogOut, MapPin, PlusCircle } from "lucide-react";
+import { Edit, LogOut, MapPin, PlusCircle, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { AnnouncementWithProfile } from "@/lib/types";
@@ -143,7 +143,14 @@ const Profile = () => {
           {announcements.length > 0 ? (
             <div className="space-y-4">
               {announcements.map((announcement) => (
-                <AnnouncementCard key={announcement.id} announcement={announcement} />
+                <div key={announcement.id} className="relative group">
+                  <AnnouncementCard announcement={announcement} />
+                  <Button asChild size="icon" variant="secondary" className="absolute top-4 right-4 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Link to={`/announcement/${announcement.id}/edit`}>
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+                  </Button>
+                </div>
               ))}
             </div>
           ) : (

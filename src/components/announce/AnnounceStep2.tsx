@@ -19,18 +19,29 @@ interface AnnounceStep2Props {
   onBack: () => void;
   onSubmit: (data: any) => void;
   isSubmitting: boolean;
+  initialData?: any;
+  submitButtonText?: string;
+  cancelButtonText?: string;
 }
 
-const AnnounceStep2 = ({ type, onBack, onSubmit, isSubmitting }: AnnounceStep2Props) => {
+const AnnounceStep2 = ({ 
+  type, 
+  onBack, 
+  onSubmit, 
+  isSubmitting, 
+  initialData, 
+  submitButtonText = "Publicar Anúncio",
+  cancelButtonText = "Voltar"
+}: AnnounceStep2Props) => {
   const [formData, setFormData] = useState({
-    bandName: "",
-    title: "",
-    experience: "",
-    description: "",
-    state: "",
-    city: "",
-    neighborhood: "",
-    tags: [] as string[],
+    bandName: initialData?.band_name || "",
+    title: initialData?.title || "",
+    experience: initialData?.experience || "",
+    description: initialData?.description || "",
+    state: initialData?.location?.state || "",
+    city: initialData?.location?.city || "",
+    neighborhood: initialData?.location?.neighborhood || "",
+    tags: initialData?.tags || [],
   });
   const [tagInput, setTagInput] = useState("");
   const [cities, setCities] = useState<City[]>([]);
@@ -178,11 +189,11 @@ const AnnounceStep2 = ({ type, onBack, onSubmit, isSubmitting }: AnnounceStep2Pr
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="w-full" onClick={onBack} disabled={isSubmitting}>
-          Voltar
+          {cancelButtonText}
         </Button>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Publicar Anúncio
+          {submitButtonText}
         </Button>
       </div>
     </form>
