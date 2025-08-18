@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
