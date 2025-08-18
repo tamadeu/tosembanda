@@ -42,37 +42,38 @@ const Search = () => {
   const [state, setState] = useState(searchParams.get('state') || "");
   const [city, setCity] = useState(searchParams.get('city') || "");
   const [cities, setCities] = useState<City[]>([]);
-  const [instruments, setInstruments] = useState<string[]>(searchParams.get('instruments')?.split(',') || []);
-  const [genres, setGenres] = useState<string[]>(searchParams.get('genres')?.split(',') || []);
-  const [objectives, setObjectives] = useState<string[]>(searchParams.get('objectives')?.split(',') || []);
+  const [instruments, setInstruments] = useState<string[]>(searchParams.get('instruments')?.split(',').filter(Boolean) || []);
+  const [genres, setGenres] = useState<string[]>(searchParams.get('genres')?.split(',').filter(Boolean) || []);
+  const [objectives, setObjectives] = useState<string[]>(searchParams.get('objectives')?.split(',').filter(Boolean) || []);
   
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [profiles, setProfiles] = useState<ProfileSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("announcements");
 
+  // Sync filter state from URL search params
   useEffect(() => {
     const getArrayParam = (name: string) => searchParams.get(name)?.split(',').filter(Boolean) || [];
     setSearchTerm(searchParams.get('q') || '');
     setType(searchParams.get('type') || '');
-    const stateParam = searchParams.get('state') || '';
-    setState(stateParam);
+    setState(searchParams.get('state') || '');
+    setCity(searchParams.get('city') || '');
     setInstruments(getArrayParam('instruments'));
     setGenres(getArrayParam('genres'));
     setObjectives(getArrayParam('objectives'));
-
-    if (stateParam) {
-        const stateData = states.find(s => s.sigla === stateParam);
-        if (stateData) {
-            setCities(stateData.cidades);
-            setCity(searchParams.get('city') || '');
-        }
-    } else {
-        setCities([]);
-        setCity('');
-    }
   }, [searchParams]);
 
+  // Update cities when state changes
+  useEffect(() => {
+    if (state) {
+      const stateData = states.find(s => s.sigla === state);
+      setCities(stateData ? stateData.cidades : []);
+    } else {
+      setCities([]);
+    }
+  }, [state]);
+
+  // Debounce search term input to update URL
   useEffect(() => {
     const handler = setTimeout(() => {
       const newParams = new URLSearchParams(searchParams);
@@ -89,6 +90,7 @@ const Search = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, searchParams, setSearchParams]);
 
+  // Perform search when URL search params change
   useEffect(() => {
     const performSearch = async () => {
       const getArrayParam = (name: string) => searchParams.get(name)?.split(',').filter(Boolean) || [];
@@ -197,6 +199,11 @@ const Search = () => {
     });
   };
 
+  const handleStateChange = (newState: string) => {
+    setState(newState);
+    setCity(''); // Reset city when state is changed by user
+  };
+
   const activeFiltersCount = ['type', 'state', 'city'].filter(key => searchParams.has(key)).length + instruments.length + genres.length + objectives.length;
   const showSuggestions = searchParams.toString() === '';
 
@@ -248,7 +255,7 @@ const Search = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
-                    <Select value={state} onValueChange={setState}>
+                    <Select value={state} onValueChange={handleStateChange}>
                       <SelectTrigger id="state">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
