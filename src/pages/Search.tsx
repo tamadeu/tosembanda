@@ -23,7 +23,6 @@ import { Label } from "@/components/ui/label";
 import { Search as SearchIcon, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
-import { states, City } from "@/lib/location-data";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementWithProfile, ProfileSearchResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,7 +40,8 @@ const Search = () => {
   const [type, setType] = useState(searchParams.get('type') || "");
   const [state, setState] = useState(searchParams.get('state') || "");
   const [city, setCity] = useState(searchParams.get('city') || "");
-  const [cities, setCities] = useState<City[]>([]);
+  const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
   const [instruments, setInstruments] = useState<string[]>(searchParams.get('instruments')?.split(',').filter(Boolean) || []);
   const [genres, setGenres] = useState<string[]>(searchParams.get('genres')?.split(',').filter(Boolean) || []);
   const [objectives, setObjectives] = useState<string[]>(searchParams.get('objectives')?.split(',').filter(Boolean) || []);
@@ -63,15 +63,36 @@ const Search = () => {
     setObjectives(getArrayParam('objectives'));
   }, [searchParams]);
 
+  // Fetch states from DB
+  useEffect(() => {
+    const fetchStates = async () => {
+      const { data } = await supabase.from('estados').select('id, sigla, nome').order('nome');
+      if (data) {
+        setDbStates(data);
+      }
+    };
+    fetchStates();
+  }, []);
+
   // Update cities when state changes
   useEffect(() => {
-    if (state) {
-      const stateData = states.find(s => s.sigla === state);
-      setCities(stateData ? stateData.cidades : []);
-    } else {
-      setCities([]);
+    const fetchCities = async () => {
+      if (state) {
+        const stateData = dbStates.find(s => s.sigla === state);
+        if (stateData) {
+          const { data } = await supabase.from('municipios').select('nome').eq('ufid', stateData.id).order('nome');
+          if (data) {
+            setDbCities(data);
+          }
+        }
+      } else {
+        setDbCities([]);
+      }
+    };
+    if (dbStates.length > 0) {
+      fetchCities();
     }
-  }, [state]);
+  }, [state, dbStates]);
 
   // Debounce search term input to update URL
   useEffect(() => {
@@ -260,7 +281,7 @@ const Search = () => {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        {states.map((s) => (
+                        {dbStates.map((s) => (
                           <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>
                         ))}
                       </SelectContent>
@@ -273,7 +294,7 @@ const Search = () => {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        {cities.map((c) => (
+                        {dbCities.map((c) => (
                           <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>
                         ))}
                       </SelectContent>
