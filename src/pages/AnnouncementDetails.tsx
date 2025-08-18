@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementWithProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 const AnnouncementDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,10 @@ const AnnouncementDetails = () => {
 
     fetchAnnouncement();
   }, [id]);
+
+  const handleRefresh = async () => {
+    window.location.reload();
+  };
 
   if (loading) {
     return (
@@ -71,62 +76,83 @@ const AnnouncementDetails = () => {
 
   const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário Anônimo";
   const userInitial = userName.charAt(0).toUpperCase();
-  const tags = announcement.tags || [];
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
-      <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col">
-        <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center justify-center relative">
-          <div className="absolute left-2 top-1/2 -translate-y-1/2">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </div>
-          <h1 className="text-xl font-bold text-center">Detalhes</h1>
-        </header>
-
-        <main className="flex-1 p-4 space-y-4 overflow-y-auto pb-24">
-          <Card className="shadow-none border-none">
-            <CardHeader className="p-0">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
-                  <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-bold">{announcement.title}</CardTitle>
-                  <Link to={`/user/${announcement.user_id}`} className="text-sm text-muted-foreground hover:underline">
-                    {userName}
-                  </Link>
-                  {announcement.location && (
-                    <div className="flex items-center text-xs text-muted-foreground mt-1">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
+      <div className="w-full max-w-md mx-auto bg-white dark:bg-black h-screen flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center justify-center relative">
+            <div className="absolute left-2 top-1/2 -translate-y-1/2">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </div>
+            <h1 className="text-xl font-bold text-center">Detalhes</h1>
+          </header>
+          <PullToRefresh onRefresh={handleRefresh}>
+            <main className="p-4 space-y-4">
+              <Card className="shadow-none border-none">
+                <CardHeader className="p-0">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={announcement.profile?.avatar_url || undefined} alt={userName} />
+                      <AvatarFallback>{userInitial}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg font-bold">{announcement.title}</CardTitle>
+                      <Link to={`/user/${announcement.user_id}`} className="text-sm text-muted-foreground hover:underline">
+                        {userName}
+                      </Link>
+                      {announcement.location && (
+                        <div className="flex items-center text-xs text-muted-foreground mt-1">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          <span>{`${announcement.location.city}, ${announcement.location.state}`}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 mt-4">
-              <p className="text-sm text-foreground/80 whitespace-pre-wrap">{announcement.description}</p>
-            </CardContent>
-          </Card>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 mt-4">
+                  <p className="text-sm text-foreground/80 whitespace-pre-wrap">{announcement.description}</p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Habilidades e Interesses</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </CardContent>
-          </Card>
-        </main>
-
-        <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
+              {announcement.instruments && announcement.instruments.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Instrumentos</CardTitle></CardHeader>
+                  <CardContent className="flex flex-wrap gap-2">
+                    {announcement.instruments.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+                  </CardContent>
+                </Card>
+              )}
+              {announcement.genres && announcement.genres.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Gêneros Musicais</CardTitle></CardHeader>
+                  <CardContent className="flex flex-wrap gap-2">
+                    {announcement.genres.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+                  </CardContent>
+                </Card>
+              )}
+              {announcement.objectives && announcement.objectives.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Objetivos</CardTitle></CardHeader>
+                  <CardContent className="flex flex-wrap gap-2">
+                    {announcement.objectives.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+                  </CardContent>
+                </Card>
+              )}
+              {announcement.tags && announcement.tags.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle>Outras Tags</CardTitle></CardHeader>
+                  <CardContent className="flex flex-wrap gap-2">
+                    {announcement.tags.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+                  </CardContent>
+                </Card>
+              )}
+            </main>
+          </PullToRefresh>
+        </div>
+        <footer className="p-4 border-t bg-white dark:bg-black">
           <Button asChild className="w-full">
             <Link to={`/chat/announcement/${announcement.id}?source=announcement`}>
               <MessageSquare className="w-4 h-4 mr-2" />

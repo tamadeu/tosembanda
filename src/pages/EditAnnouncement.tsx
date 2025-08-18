@@ -62,9 +62,13 @@ const EditAnnouncement = () => {
                 city: formData.city,
                 neighborhood: formData.neighborhood || null,
             },
+            instruments: formData.instruments,
+            genres: formData.genres,
+            objectives: formData.objectives,
             tags: formData.tags,
             band_name: announcement.type === 'band' ? formData.bandName : null,
             experience: announcement.type === 'musician' ? formData.experience : null,
+            status: formData.status,
         };
 
         const { error } = await supabase

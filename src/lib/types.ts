@@ -26,6 +26,10 @@ export type AnnouncementWithProfile = {
   band_name: string | null;
   experience: string | null;
   profile: Profile | null;
+  instruments: string[] | null;
+  genres: string[] | null;
+  objectives: string[] | null;
+  status: 'active' | 'draft' | 'deleted';
 };
 
 // Novo tipo para o resultado da busca de perfis

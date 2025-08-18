@@ -12,7 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { states, City } from "@/lib/location-data";
+import { instruments, genres, objectives } from "@/lib/music-data";
+import { MultiSelectBadges } from "../MultiSelectBadges";
 
 interface AnnounceStep2Props {
   type: 'musician' | 'band';
@@ -41,7 +44,11 @@ const AnnounceStep2 = ({
     state: initialData?.location?.state || "",
     city: initialData?.location?.city || "",
     neighborhood: initialData?.location?.neighborhood || "",
+    instruments: initialData?.instruments || [],
+    genres: initialData?.genres || [],
+    objectives: initialData?.objectives || [],
     tags: initialData?.tags || [],
+    status: initialData?.status || 'active',
   });
   const [tagInput, setTagInput] = useState("");
   const [cities, setCities] = useState<City[]>([]);
@@ -67,6 +74,16 @@ const AnnounceStep2 = ({
     }
   };
 
+  const handleToggle = (field: 'instruments' | 'genres' | 'objectives') => (option: string) => {
+    setFormData(prev => {
+        const currentSelection = prev[field] as string[];
+        const newSelection = currentSelection.includes(option)
+            ? currentSelection.filter(item => item !== option)
+            : [...currentSelection, option];
+        return { ...prev, [field]: newSelection };
+    });
+  };
+
   const handleAddTag = () => {
     if (tagInput.trim() && !formData.tags.find(t => t.toLowerCase() === tagInput.trim().toLowerCase())) {
       setFormData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
@@ -76,6 +93,10 @@ const AnnounceStep2 = ({
 
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
+  };
+
+  const handleStatusChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, status: checked ? 'active' : 'draft' }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +134,27 @@ const AnnounceStep2 = ({
           value={formData.description}
           onChange={handleChange}
           required
+        />
+      </div>
+
+      <div className="space-y-4">
+        <MultiSelectBadges
+          label="Instrumentos"
+          options={instruments}
+          selected={formData.instruments}
+          onToggle={handleToggle('instruments')}
+        />
+        <MultiSelectBadges
+          label="Gêneros Musicais"
+          options={genres}
+          selected={formData.genres}
+          onToggle={handleToggle('genres')}
+        />
+        <MultiSelectBadges
+          label="Objetivos"
+          options={objectives}
+          selected={formData.objectives}
+          onToggle={handleToggle('objectives')}
         />
       </div>
 
@@ -157,7 +199,7 @@ const AnnounceStep2 = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tags">Habilidades e Interesses (Tags)</Label>
+        <Label htmlFor="tags">Outras Tags (Opcional)</Label>
         <div className="flex gap-2">
           <Input
             id="tags"
@@ -186,6 +228,22 @@ const AnnounceStep2 = ({
           ))}
         </div>
       </div>
+
+      {initialData && (
+        <div className="flex items-center justify-between rounded-lg border p-4">
+            <div>
+                <Label htmlFor="status" className="font-bold">Publicar Anúncio</Label>
+                <p className="text-xs text-muted-foreground">
+                    {formData.status === 'active' ? 'Seu anúncio está visível para todos.' : 'Seu anúncio está como rascunho.'}
+                </p>
+            </div>
+            <Switch
+                id="status"
+                checked={formData.status === 'active'}
+                onCheckedChange={handleStatusChange}
+            />
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="w-full" onClick={onBack} disabled={isSubmitting}>

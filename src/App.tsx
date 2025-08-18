@@ -21,6 +21,9 @@ import Login from "./pages/Login";
 import EditAnnouncement from "./pages/EditAnnouncement";
 import PublicProfile from "./pages/PublicProfile";
 import UpdatePassword from "./pages/UpdatePassword";
+import Settings from "./pages/Settings";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +42,8 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/announcement/:id" element={<AnnouncementDetails />} />
               <Route path="/user/:id" element={<PublicProfile />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
               
               {/* Rotas Protegidas */}
               <Route element={<ProtectedRoute />}>
@@ -50,6 +55,7 @@ const App = () => (
                 <Route path="/chat" element={<ChatList />} />
                 <Route path="/chat/announcement/:announcementId" element={<Chat />} />
                 <Route path="/chat/user/:userId" element={<Chat />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

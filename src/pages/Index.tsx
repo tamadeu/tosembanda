@@ -39,6 +39,7 @@ const Index = () => {
       .from('announcements')
       .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
       .eq('type', type)
+      .eq('status', 'active')
       .order('created_at', { ascending: false })
       .range(from, to);
 
