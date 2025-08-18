@@ -309,9 +309,9 @@ const Chat = () => {
   const showFooterContext = showContext && searchParams.get('source');
 
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="bg-gray-100 dark:bg-gray-900 font-sans">
-        <div className="w-full max-w-md mx-auto bg-white dark:bg-black min-h-screen flex flex-col">
+    <div className="bg-gray-100 dark:bg-gray-900 font-sans">
+      <div className="w-full max-w-md mx-auto bg-white dark:bg-black h-screen flex flex-col">
+        <div className="flex-1 overflow-y-auto">
           <header className="p-4 border-b sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-10 flex items-center gap-4">
             <Button variant="ghost" size="icon" className="-ml-2" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
@@ -322,69 +322,69 @@ const Chat = () => {
             </Avatar>
             <h1 className="text-lg font-semibold">{userName}</h1>
           </header>
-
-          <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-            {messages.map((msg) => {
-              const showContextCard = msg.announcement || msg.context_profile;
-              
-              return (
-                <div key={msg.id}>
-                  {showContextCard && (
-                    <MessageContextCard announcement={msg.announcement} profile={msg.context_profile} />
-                  )}
-                  <div
-                    className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {msg.sender_id !== currentUser?.id && (
-                       <Avatar className="w-8 h-8">
-                          <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
-                          <AvatarFallback>{userInitial}</AvatarFallback>
-                      </Avatar>
+          <PullToRefresh onRefresh={handleRefresh}>
+            <main className="p-4 space-y-4">
+              {messages.map((msg) => {
+                const showContextCard = msg.announcement || msg.context_profile;
+                
+                return (
+                  <div key={msg.id}>
+                    {showContextCard && (
+                      <MessageContextCard announcement={msg.announcement} profile={msg.context_profile} />
                     )}
                     <div
-                      className={`max-w-xs md:max-w-md p-3 rounded-lg ${
-                        msg.sender_id === currentUser?.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      className={`flex items-end gap-2 ${msg.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm">{msg.content}</p>
+                      {msg.sender_id !== currentUser?.id && (
+                         <Avatar className="w-8 h-8">
+                            <AvatarImage src={otherUser.avatar_url || undefined} alt={userName} />
+                            <AvatarFallback>{userInitial}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div
+                        className={`max-w-xs md:max-w-md p-3 rounded-lg ${
+                          msg.sender_id === currentUser?.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm">{msg.content}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-            {isTyping && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </main>
-
-          <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">
-            {showFooterContext && (announcementContext || (userId && !announcementId)) && (
-              <div className="mb-2">
-                <ChatContext
-                  type={announcementContext ? 'announcement' : 'profile'}
-                  data={announcementContext || otherUser}
-                  onClose={() => setShowContext(false)}
-                />
-              </div>
-            )}
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
-              <Input
-                placeholder="Digite sua mensagem..."
-                value={newMessage}
-                onChange={(e) => {
-                  setNewMessage(e.target.value);
-                  handleTyping();
-                }}
-              />
-              <Button type="submit" size="icon">
-                <Send className="w-5 h-5" />
-              </Button>
-            </form>
-          </footer>
+                )
+              })}
+              {isTyping && <TypingIndicator />}
+              <div ref={messagesEndRef} />
+            </main>
+          </PullToRefresh>
         </div>
+        <footer className="p-4 border-t bg-white dark:bg-black">
+          {showFooterContext && (announcementContext || (userId && !announcementId)) && (
+            <div className="mb-2">
+              <ChatContext
+                type={announcementContext ? 'announcement' : 'profile'}
+                data={announcementContext || otherUser}
+                onClose={() => setShowContext(false)}
+              />
+            </div>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="flex items-center gap-2">
+            <Input
+              placeholder="Digite sua mensagem..."
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+              }}
+            />
+            <Button type="submit" size="icon">
+              <Send className="w-5 h-5" />
+            </Button>
+          </form>
+        </footer>
       </div>
-    </PullToRefresh>
+    </div>
   );
 };
 
