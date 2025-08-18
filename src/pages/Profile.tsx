@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, LogOut, MapPin, PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { Edit, LogOut, MapPin, PlusCircle, Pencil, Trash2, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { AnnouncementWithProfile } from "@/lib/types";
@@ -142,6 +142,11 @@ const Profile = () => {
                 <Edit className="w-4 h-4 mr-2" />
                 Editar Perfil
               </Link>
+            </Button>
+            <Button asChild variant="ghost" size="icon">
+                <Link to="/settings">
+                    <Settings className="w-5 h-5" />
+                </Link>
             </Button>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="w-5 h-5" />
