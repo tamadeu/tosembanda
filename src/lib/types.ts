@@ -29,6 +29,7 @@ export type AnnouncementWithProfile = {
   instruments: string[] | null;
   genres: string[] | null;
   objectives: string[] | null;
+  status: 'active' | 'draft' | 'deleted';
 };
 
 // Novo tipo para o resultado da busca de perfis

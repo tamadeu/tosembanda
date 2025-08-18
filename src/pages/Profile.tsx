@@ -53,7 +53,7 @@ const Profile = () => {
         .from('announcements')
         .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
         .eq('user_id', user.id)
-        .eq('status', 'active')
+        .in('status', ['active', 'draft'])
         .order('created_at', { ascending: false });
 
       if (announcementsError) {
@@ -180,6 +180,11 @@ const Profile = () => {
             <div className="space-y-4">
               {announcements.map((announcement) => (
                 <div key={announcement.id} className="relative group">
+                  {announcement.status === 'draft' && (
+                    <Badge variant="outline" className="absolute top-4 left-4 z-10 bg-background/80 backdrop-blur-sm">
+                      Rascunho
+                    </Badge>
+                  )}
                   <AnnouncementCard announcement={announcement} />
                   <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button asChild size="icon" variant="secondary" className="h-8 w-8">
