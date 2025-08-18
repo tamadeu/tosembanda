@@ -8,7 +8,7 @@ import { ArrowLeft, MapPin, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementWithProfile } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import PullToRefresh from "react-pull-to-refresh";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 const AnnouncementDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -40,11 +40,8 @@ const AnnouncementDetails = () => {
     fetchAnnouncement();
   }, [id]);
 
-  const handleRefresh = () => {
-    return new Promise<void>((resolve) => {
-      window.location.reload();
-      resolve();
-    });
+  const handleRefresh = async () => {
+    window.location.reload();
   };
 
   if (loading) {
@@ -79,12 +76,6 @@ const AnnouncementDetails = () => {
 
   const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário Anônimo";
   const userInitial = userName.charAt(0).toUpperCase();
-  const allTags = [
-    ...(announcement.instruments || []),
-    ...(announcement.genres || []),
-    ...(announcement.objectives || []),
-    ...(announcement.tags || [])
-  ];
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>

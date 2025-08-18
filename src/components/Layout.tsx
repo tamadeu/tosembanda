@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useNotifications } from "@/contexts/NotificationsContext";
 import { Badge } from "./ui/badge";
-import PullToRefresh from "react-pull-to-refresh";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,11 +23,8 @@ export const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
   const { unreadCount } = useNotifications();
 
-  const handleRefresh = () => {
-    return new Promise<void>((resolve) => {
-      window.location.reload();
-      resolve();
-    });
+  const handleRefresh = async () => {
+    window.location.reload();
   };
 
   return (

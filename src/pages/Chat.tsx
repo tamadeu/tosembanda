@@ -12,7 +12,7 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { ChatContext } from "@/components/ChatContext";
 import { MessageContextCard } from "@/components/MessageContextCard";
-import PullToRefresh from "react-pull-to-refresh";
+import PullToRefresh from "react-simple-pull-to-refresh";
 
 type Message = {
   id: string;
@@ -66,11 +66,8 @@ const Chat = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleRefresh = () => {
-    return new Promise<void>((resolve) => {
-      window.location.reload();
-      resolve();
-    });
+  const handleRefresh = async () => {
+    window.location.reload();
   };
 
   useEffect(() => {
