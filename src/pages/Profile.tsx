@@ -7,10 +7,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, LogOut, MapPin, PlusCircle, Pencil } from "lucide-react";
+import { Edit, LogOut, MapPin, PlusCircle, Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { AnnouncementWithProfile } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { showError, showSuccess } from "@/utils/toast";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -18,6 +29,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfileAndAnnouncements = async () => {
@@ -41,6 +53,7 @@ const Profile = () => {
         .from('announcements')
         .select('*, profile:profiles!user_id(first_name, last_name, avatar_url)')
         .eq('user_id', user.id)
+        .eq('status', 'active')
         .order('created_at', { ascending: false });
 
       if (announcementsError) {
@@ -60,6 +73,23 @@ const Profile = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
+  };
+
+  const handleDelete = async () => {
+    if (!deletingAnnouncementId) return;
+
+    const { error } = await supabase
+      .from('announcements')
+      .update({ status: 'deleted' })
+      .eq('id', deletingAnnouncementId);
+
+    if (error) {
+      showError("Erro ao excluir o anúncio.");
+    } else {
+      showSuccess("Anúncio excluído com sucesso.");
+      setAnnouncements(prev => prev.filter(a => a.id !== deletingAnnouncementId));
+    }
+    setDeletingAnnouncementId(null);
   };
 
   if (loading) {
@@ -151,11 +181,16 @@ const Profile = () => {
               {announcements.map((announcement) => (
                 <div key={announcement.id} className="relative group">
                   <AnnouncementCard announcement={announcement} />
-                  <Button asChild size="icon" variant="secondary" className="absolute top-4 right-4 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Link to={`/announcement/${announcement.id}/edit`}>
-                      <Pencil className="w-4 h-4" />
-                    </Link>
-                  </Button>
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button asChild size="icon" variant="secondary" className="h-8 w-8">
+                      <Link to={`/announcement/${announcement.id}/edit`}>
+                        <Pencil className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                    <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => setDeletingAnnouncementId(announcement.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -172,6 +207,21 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deletingAnnouncementId} onOpenChange={() => setDeletingAnnouncementId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O anúncio será removido permanentemente da sua visualização e das buscas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

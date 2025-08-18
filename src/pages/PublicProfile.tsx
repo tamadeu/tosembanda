@@ -32,7 +32,7 @@ const PublicProfile = () => {
 
       const [profileResponse, announcementsResponse] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', id).single(),
-        supabase.from('announcements').select('*, profile:profiles!user_id(first_name, last_name, avatar_url)').eq('user_id', id).order('created_at', { ascending: false })
+        supabase.from('announcements').select('*, profile:profiles!user_id(first_name, last_name, avatar_url)').eq('user_id', id).eq('status', 'active').order('created_at', { ascending: false })
       ]);
 
       if (profileResponse.error || !profileResponse.data) {
