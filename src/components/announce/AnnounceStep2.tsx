@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { states, City } from "@/lib/location-data";
 import { instruments, genres, objectives } from "@/lib/music-data";
 import { MultiSelectBadges } from "../MultiSelectBadges";
@@ -47,6 +48,7 @@ const AnnounceStep2 = ({
     genres: initialData?.genres || [],
     objectives: initialData?.objectives || [],
     tags: initialData?.tags || [],
+    status: initialData?.status || 'active',
   });
   const [tagInput, setTagInput] = useState("");
   const [cities, setCities] = useState<City[]>([]);
@@ -91,6 +93,10 @@ const AnnounceStep2 = ({
 
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData(prev => ({ ...prev, tags: prev.tags.filter(tag => tag !== tagToRemove) }));
+  };
+
+  const handleStatusChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, status: checked ? 'active' : 'draft' }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -222,6 +228,22 @@ const AnnounceStep2 = ({
           ))}
         </div>
       </div>
+
+      {initialData && (
+        <div className="flex items-center justify-between rounded-lg border p-4">
+            <div>
+                <Label htmlFor="status" className="font-bold">Publicar Anúncio</Label>
+                <p className="text-xs text-muted-foreground">
+                    {formData.status === 'active' ? 'Seu anúncio está visível para todos.' : 'Seu anúncio está como rascunho.'}
+                </p>
+            </div>
+            <Switch
+                id="status"
+                checked={formData.status === 'active'}
+                onCheckedChange={handleStatusChange}
+            />
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button type="button" variant="outline" className="w-full" onClick={onBack} disabled={isSubmitting}>

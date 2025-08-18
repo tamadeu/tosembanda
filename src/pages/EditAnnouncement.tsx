@@ -68,6 +68,7 @@ const EditAnnouncement = () => {
             tags: formData.tags,
             band_name: announcement.type === 'band' ? formData.bandName : null,
             experience: announcement.type === 'musician' ? formData.experience : null,
+            status: formData.status,
         };
 
         const { error } = await supabase
