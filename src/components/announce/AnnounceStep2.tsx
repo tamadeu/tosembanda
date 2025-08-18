@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { states, City } from "@/lib/location-data";
+import { supabase } from "@/integrations/supabase/client";
 import { instruments, genres, objectives } from "@/lib/music-data";
 import { MultiSelectBadges } from "../MultiSelectBadges";
 
@@ -51,16 +51,46 @@ const AnnounceStep2 = ({
     status: initialData?.status || 'active',
   });
   const [tagInput, setTagInput] = useState("");
-  const [cities, setCities] = useState<City[]>([]);
+  const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
 
   useEffect(() => {
-    if (formData.state) {
-      const stateData = states.find(s => s.sigla === formData.state);
-      setCities(stateData ? stateData.cidades : []);
-    } else {
-      setCities([]);
+    const fetchStates = async () => {
+      const { data, error } = await supabase.from('estados').select('id, sigla, nome').order('nome', { ascending: true });
+      if (error) {
+        console.error('Error fetching states:', error);
+      } else if (data) {
+        setDbStates(data);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (formData.state) {
+        const selectedStateData = dbStates.find(s => s.sigla === formData.state);
+        if (selectedStateData) {
+          const { data, error } = await supabase
+            .from('municipios')
+            .select('nome')
+            .eq('ufid', selectedStateData.id)
+            .order('nome', { ascending: true });
+          if (error) {
+            console.error('Error fetching cities:', error);
+            setDbCities([]);
+          } else if (data) {
+            setDbCities(data);
+          }
+        }
+      } else {
+        setDbCities([]);
+      }
+    };
+    if (dbStates.length > 0) {
+      fetchCities();
     }
-  }, [formData.state]);
+  }, [formData.state, dbStates]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -168,7 +198,7 @@ const AnnounceStep2 = ({
                 <SelectValue placeholder="Selecione o estado" />
               </SelectTrigger>
               <SelectContent>
-                {states.map((state) => (
+                {dbStates.map((state) => (
                   <SelectItem key={state.sigla} value={state.sigla}>
                     {state.nome}
                   </SelectItem>
@@ -183,7 +213,7 @@ const AnnounceStep2 = ({
                 <SelectValue placeholder="Selecione a cidade" />
               </SelectTrigger>
               <SelectContent>
-                {cities.map((city) => (
+                {dbCities.map((city) => (
                   <SelectItem key={city.nome} value={city.nome}>
                     {city.nome}
                   </SelectItem>

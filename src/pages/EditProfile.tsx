@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess } from "@/utils/toast";
 import { Loader2, Plus, X } from "lucide-react";
 import { AvatarUpload } from "@/components/AvatarUpload";
-import { states, City } from "@/lib/location-data";
 
 const profileSchema = z.object({
   first_name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
@@ -37,7 +36,8 @@ const EditProfile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [cities, setCities] = useState<City[]>([]);
+  const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -55,13 +55,35 @@ const EditProfile = () => {
   const selectedState = form.watch('state');
 
   useEffect(() => {
-    if (selectedState) {
-      const stateData = states.find(s => s.sigla === selectedState);
-      setCities(stateData ? stateData.cidades : []);
-    } else {
-      setCities([]);
-    }
-  }, [selectedState]);
+    const fetchStates = async () => {
+      const { data, error } = await supabase.from('estados').select('id, sigla, nome').order('nome');
+      if (data) {
+        setDbStates(data);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (selectedState && dbStates.length > 0) {
+        const stateData = dbStates.find(s => s.sigla === selectedState);
+        if (stateData) {
+          const { data, error } = await supabase
+            .from('municipios')
+            .select('nome')
+            .eq('ufid', stateData.id)
+            .order('nome');
+          if (data) {
+            setDbCities(data);
+          }
+        }
+      } else {
+        setDbCities([]);
+      }
+    };
+    fetchCities();
+  }, [selectedState, dbStates]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -203,7 +225,7 @@ const EditProfile = () => {
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {states.map(s => <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>)}
+                      {dbStates.map(s => <SelectItem key={s.sigla} value={s.sigla}>{s.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -221,7 +243,7 @@ const EditProfile = () => {
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {cities.map(c => <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>)}
+                      {dbCities.map(c => <SelectItem key={c.nome} value={c.nome}>{c.nome}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
