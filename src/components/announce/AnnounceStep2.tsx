@@ -52,7 +52,7 @@ const AnnounceStep2 = ({
   });
   const [tagInput, setTagInput] = useState("");
   const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
-  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string; capital: number }[]>([]);
 
   useEffect(() => {
     const fetchStates = async () => {
@@ -73,8 +73,9 @@ const AnnounceStep2 = ({
         if (selectedStateData) {
           const { data, error } = await supabase
             .from('municipios')
-            .select('nome')
+            .select('nome, capital')
             .eq('ufid', selectedStateData.id)
+            .order('capital', { ascending: false })
             .order('nome', { ascending: true });
           if (error) {
             console.error('Error fetching cities:', error);

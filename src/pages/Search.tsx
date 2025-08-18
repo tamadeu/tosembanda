@@ -41,7 +41,7 @@ const Search = () => {
   const [state, setState] = useState(searchParams.get('state') || "");
   const [city, setCity] = useState(searchParams.get('city') || "");
   const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
-  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string; capital: number }[]>([]);
   const [instruments, setInstruments] = useState<string[]>(searchParams.get('instruments')?.split(',').filter(Boolean) || []);
   const [genres, setGenres] = useState<string[]>(searchParams.get('genres')?.split(',').filter(Boolean) || []);
   const [objectives, setObjectives] = useState<string[]>(searchParams.get('objectives')?.split(',').filter(Boolean) || []);
@@ -80,7 +80,12 @@ const Search = () => {
       if (state) {
         const stateData = dbStates.find(s => s.sigla === state);
         if (stateData) {
-          const { data } = await supabase.from('municipios').select('nome').eq('ufid', stateData.id).order('nome');
+          const { data } = await supabase
+            .from('municipios')
+            .select('nome, capital')
+            .eq('ufid', stateData.id)
+            .order('capital', { ascending: false })
+            .order('nome', { ascending: true });
           if (data) {
             setDbCities(data);
           }

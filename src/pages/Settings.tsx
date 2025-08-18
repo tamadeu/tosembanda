@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import PWAInstallButton from "@/components/PWAInstallButton";
 
 const Settings = () => {
   return (
@@ -46,6 +47,22 @@ const Settings = () => {
             <div className="flex items-center justify-between">
               <Label htmlFor="new-message-notification">Nova mensagem no chat</Label>
               <Switch id="new-message-notification" defaultChecked />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>App</CardTitle>
+            <CardDescription>Configurações do aplicativo.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Instalar como App</Label>
+                <p className="text-sm text-muted-foreground">Tenha acesso rápido direto da sua tela inicial</p>
+              </div>
+              <PWAInstallButton variant="default" size="sm" />
             </div>
           </CardContent>
         </Card>

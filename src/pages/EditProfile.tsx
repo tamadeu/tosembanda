@@ -37,7 +37,7 @@ const EditProfile = () => {
   const [tagInput, setTagInput] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [dbStates, setDbStates] = useState<{ id: number; sigla: string; nome: string }[]>([]);
-  const [dbCities, setDbCities] = useState<{ nome: string }[]>([]);
+  const [dbCities, setDbCities] = useState<{ nome: string; capital: number }[]>([]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -71,9 +71,10 @@ const EditProfile = () => {
         if (stateData) {
           const { data, error } = await supabase
             .from('municipios')
-            .select('nome')
+            .select('nome, capital')
             .eq('ufid', stateData.id)
-            .order('nome');
+            .order('capital', { ascending: false })
+            .order('nome', { ascending: true });
           if (data) {
             setDbCities(data);
           }

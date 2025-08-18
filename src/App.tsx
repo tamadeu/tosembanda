@@ -24,6 +24,7 @@ import UpdatePassword from "./pages/UpdatePassword";
 import Settings from "./pages/Settings";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <PWAInstallPrompt />
           </NotificationsProvider>
         </AuthProvider>
       </BrowserRouter>
