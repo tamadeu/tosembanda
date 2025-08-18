@@ -71,7 +71,12 @@ const AnnouncementDetails = () => {
 
   const userName = [announcement.profile?.first_name, announcement.profile?.last_name].filter(Boolean).join(' ') || "Usuário Anônimo";
   const userInitial = userName.charAt(0).toUpperCase();
-  const tags = announcement.tags || [];
+  const allTags = [
+    ...(announcement.instruments || []),
+    ...(announcement.genres || []),
+    ...(announcement.objectives || []),
+    ...(announcement.tags || [])
+  ];
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 font-sans">
@@ -112,18 +117,38 @@ const AnnouncementDetails = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Habilidades e Interesses</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </CardContent>
-          </Card>
+          {announcement.instruments && announcement.instruments.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Instrumentos</CardTitle></CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {announcement.instruments.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+              </CardContent>
+            </Card>
+          )}
+          {announcement.genres && announcement.genres.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Gêneros Musicais</CardTitle></CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {announcement.genres.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+              </CardContent>
+            </Card>
+          )}
+          {announcement.objectives && announcement.objectives.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Objetivos</CardTitle></CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {announcement.objectives.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+              </CardContent>
+            </Card>
+          )}
+          {announcement.tags && announcement.tags.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Outras Tags</CardTitle></CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {announcement.tags.map((item) => <Badge key={item} variant="secondary">{item}</Badge>)}
+              </CardContent>
+            </Card>
+          )}
         </main>
 
         <footer className="p-4 border-t bg-white dark:bg-black sticky bottom-0">

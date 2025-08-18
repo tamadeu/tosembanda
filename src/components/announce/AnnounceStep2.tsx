@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { states, City } from "@/lib/location-data";
+import { instruments, genres, objectives } from "@/lib/music-data";
+import { MultiSelectBadges } from "../MultiSelectBadges";
 
 interface AnnounceStep2Props {
   type: 'musician' | 'band';
@@ -41,6 +43,9 @@ const AnnounceStep2 = ({
     state: initialData?.location?.state || "",
     city: initialData?.location?.city || "",
     neighborhood: initialData?.location?.neighborhood || "",
+    instruments: initialData?.instruments || [],
+    genres: initialData?.genres || [],
+    objectives: initialData?.objectives || [],
     tags: initialData?.tags || [],
   });
   const [tagInput, setTagInput] = useState("");
@@ -65,6 +70,16 @@ const AnnounceStep2 = ({
     if (field === 'state') {
       setFormData(prev => ({ ...prev, city: "" }));
     }
+  };
+
+  const handleToggle = (field: 'instruments' | 'genres' | 'objectives') => (option: string) => {
+    setFormData(prev => {
+        const currentSelection = prev[field] as string[];
+        const newSelection = currentSelection.includes(option)
+            ? currentSelection.filter(item => item !== option)
+            : [...currentSelection, option];
+        return { ...prev, [field]: newSelection };
+    });
   };
 
   const handleAddTag = () => {
@@ -116,6 +131,27 @@ const AnnounceStep2 = ({
         />
       </div>
 
+      <div className="space-y-4">
+        <MultiSelectBadges
+          label="Instrumentos"
+          options={instruments}
+          selected={formData.instruments}
+          onToggle={handleToggle('instruments')}
+        />
+        <MultiSelectBadges
+          label="Gêneros Musicais"
+          options={genres}
+          selected={formData.genres}
+          onToggle={handleToggle('genres')}
+        />
+        <MultiSelectBadges
+          label="Objetivos"
+          options={objectives}
+          selected={formData.objectives}
+          onToggle={handleToggle('objectives')}
+        />
+      </div>
+
       <div className="space-y-2">
         <Label>Localização</Label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -157,7 +193,7 @@ const AnnounceStep2 = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tags">Habilidades e Interesses (Tags)</Label>
+        <Label htmlFor="tags">Outras Tags (Opcional)</Label>
         <div className="flex gap-2">
           <Input
             id="tags"

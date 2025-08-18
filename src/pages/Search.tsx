@@ -12,7 +12,6 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "@/components/ui/drawer";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -29,23 +28,22 @@ import { AnnouncementWithProfile, ProfileSearchResult } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileCard } from "@/components/ProfileCard";
+import { instruments as instrumentOptions, genres as genreOptions, objectives as objectiveOptions } from "@/lib/music-data";
+import { MultiSelectBadges } from "@/components/MultiSelectBadges";
 
-const instruments = ["Guitarra", "Baixo", "Bateria", "Vocal", "Teclado", "Violino", "Saxofone"];
-const genres = ["Rock", "Pop", "MPB", "Jazz", "Metal", "Samba", "Funk", "Sertanejo"];
-const goals = ["Entrar em uma banda", "Show/Evento", "Gravação", "Freelancer"];
 const suggestions = ["Vocalista", "Guitarra Rock", "Bateria Metal", "Baixo MPB", "Freelancer"];
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || "");
-  const [instrument, setInstrument] = useState(searchParams.get('instrument') || "");
-  const [genre, setGenre] = useState(searchParams.get('genre') || "");
-  const [goal, setGoal] = useState(searchParams.get('goal') || "");
   const [type, setType] = useState(searchParams.get('type') || "");
   const [state, setState] = useState(searchParams.get('state') || "");
   const [city, setCity] = useState(searchParams.get('city') || "");
   const [cities, setCities] = useState<City[]>([]);
+  const [instruments, setInstruments] = useState<string[]>(searchParams.get('instruments')?.split(',') || []);
+  const [genres, setGenres] = useState<string[]>(searchParams.get('genres')?.split(',') || []);
+  const [objectives, setObjectives] = useState<string[]>(searchParams.get('objectives')?.split(',') || []);
   
   const [announcements, setAnnouncements] = useState<AnnouncementWithProfile[]>([]);
   const [profiles, setProfiles] = useState<ProfileSearchResult[]>([]);
@@ -53,13 +51,15 @@ const Search = () => {
   const [activeTab, setActiveTab] = useState("announcements");
 
   useEffect(() => {
+    const getArrayParam = (name: string) => searchParams.get(name)?.split(',').filter(Boolean) || [];
     setSearchTerm(searchParams.get('q') || '');
-    setInstrument(searchParams.get('instrument') || '');
-    setGenre(searchParams.get('genre') || '');
-    setGoal(searchParams.get('goal') || '');
     setType(searchParams.get('type') || '');
     const stateParam = searchParams.get('state') || '';
     setState(stateParam);
+    setInstruments(getArrayParam('instruments'));
+    setGenres(getArrayParam('genres'));
+    setObjectives(getArrayParam('objectives'));
+
     if (stateParam) {
         const stateData = states.find(s => s.sigla === stateParam);
         if (stateData) {
@@ -90,15 +90,16 @@ const Search = () => {
 
   useEffect(() => {
     const performSearch = async () => {
+      const getArrayParam = (name: string) => searchParams.get(name)?.split(',').filter(Boolean) || [];
       const q = searchParams.get('q') || '';
       const typeParam = searchParams.get('type') || '';
       const stateParam = searchParams.get('state') || '';
       const cityParam = searchParams.get('city') || '';
-      const instrumentParam = searchParams.get('instrument') || '';
-      const genreParam = searchParams.get('genre') || '';
-      const goalParam = searchParams.get('goal') || '';
+      const instrumentsParam = getArrayParam('instruments');
+      const genresParam = getArrayParam('genres');
+      const objectivesParam = getArrayParam('objectives');
 
-      const hasSearchParams = q || typeParam || stateParam || cityParam || instrumentParam || genreParam || goalParam;
+      const hasSearchParams = q || typeParam || stateParam || cityParam || instrumentsParam.length > 0 || genresParam.length > 0 || objectivesParam.length > 0;
 
       if (!hasSearchParams) {
         setAnnouncements([]);
@@ -107,7 +108,6 @@ const Search = () => {
       }
 
       setIsLoading(true);
-      const tagsToFilter = [instrumentParam, genreParam, goalParam].filter(Boolean);
 
       const [announcementsResponse, profilesResponse] = await Promise.all([
         supabase.rpc('search_announcements', {
@@ -115,13 +115,16 @@ const Search = () => {
           p_type: typeParam || null,
           p_state: stateParam || null,
           p_city: cityParam || null,
-          p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
+          p_tags: null,
+          p_instruments: instrumentsParam.length > 0 ? instrumentsParam : null,
+          p_genres: genresParam.length > 0 ? genresParam : null,
+          p_objectives: objectivesParam.length > 0 ? objectivesParam : null,
         }),
         supabase.rpc('search_profiles', {
           p_search_term: q || null,
           p_state: stateParam || null,
           p_city: cityParam || null,
-          p_tags: tagsToFilter.length > 0 ? tagsToFilter : null,
+          p_tags: [...instrumentsParam, ...genresParam, ...objectivesParam].length > 0 ? [...instrumentsParam, ...genresParam, ...objectivesParam] : null,
         })
       ]);
 
@@ -134,7 +137,7 @@ const Search = () => {
 
       if (profilesResponse.error) {
         console.error("Error searching profiles:", profilesResponse.error);
-        setProfiles([]);
+        setProfiles((profilesResponse.data as any[] as ProfileSearchResult[]) || []);
       } else {
         setProfiles((profilesResponse.data as any[] as ProfileSearchResult[]) || []);
       }
@@ -147,28 +150,36 @@ const Search = () => {
 
   const handleApplyFilters = () => {
     const newParams = new URLSearchParams(searchParams);
-    const updateParam = (key: string, value: string) => value ? newParams.set(key, value) : newParams.delete(key);
+    const updateParam = (key: string, value: string | string[]) => {
+      if (Array.isArray(value)) {
+        if (value.length > 0) newParams.set(key, value.join(','));
+        else newParams.delete(key);
+      } else {
+        if (value) newParams.set(key, value);
+        else newParams.delete(key);
+      }
+    };
     
     updateParam('type', type);
     updateParam('state', state);
     updateParam('city', city);
-    updateParam('instrument', instrument);
-    updateParam('genre', genre);
-    updateParam('goal', goal);
+    updateParam('instruments', instruments);
+    updateParam('genres', genres);
+    updateParam('objectives', objectives);
 
     setSearchParams(newParams);
   };
 
   const clearFilters = () => {
-    setInstrument("");
-    setGenre("");
-    setGoal("");
     setType("");
     setState("");
     setCity("");
+    setInstruments([]);
+    setGenres([]);
+    setObjectives([]);
 
     const newParams = new URLSearchParams(searchParams);
-    ['type', 'state', 'city', 'instrument', 'genre', 'goal'].forEach(key => newParams.delete(key));
+    ['type', 'state', 'city', 'instruments', 'genres', 'objectives'].forEach(key => newParams.delete(key));
     setSearchParams(newParams);
   };
 
@@ -176,7 +187,16 @@ const Search = () => {
     setSearchTerm(suggestion);
   };
 
-  const activeFiltersCount = ['type', 'state', 'city', 'instrument', 'genre', 'goal'].filter(key => searchParams.has(key)).length;
+  const handleToggle = (field: 'instruments' | 'genres' | 'objectives') => (option: string) => {
+    const setter = { instruments: setInstruments, genres: setGenres, objectives: setObjectives }[field];
+    setter(prev => {
+        return prev.includes(option)
+            ? prev.filter(item => item !== option)
+            : [...prev, option];
+    });
+  };
+
+  const activeFiltersCount = ['type', 'state', 'city'].filter(key => searchParams.has(key)).length + instruments.length + genres.length + objectives.length;
   const showSuggestions = searchParams.toString() === '';
 
   const renderLoadingSkeleton = () => (
@@ -264,45 +284,9 @@ const Search = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="instrument">Instrumento</Label>
-                  <Select value={instrument} onValueChange={setInstrument}>
-                    <SelectTrigger id="instrument">
-                      <SelectValue placeholder="Selecione um instrumento" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {instruments.map((item) => (
-                        <SelectItem key={item} value={item}>{item}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="genre">Gênero Musical</Label>
-                  <Select value={genre} onValueChange={setGenre}>
-                    <SelectTrigger id="genre">
-                      <SelectValue placeholder="Selecione um gênero" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {genres.map((item) => (
-                        <SelectItem key={item} value={item}>{item}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goal">Objetivo</Label>
-                  <Select value={goal} onValueChange={setGoal}>
-                    <SelectTrigger id="goal">
-                      <SelectValue placeholder="Selecione um objetivo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {goals.map((item) => (
-                        <SelectItem key={item} value={item}>{item}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <MultiSelectBadges label="Instrumentos" options={instrumentOptions} selected={instruments} onToggle={handleToggle('instruments')} />
+                <MultiSelectBadges label="Gêneros Musicais" options={genreOptions} selected={genres} onToggle={handleToggle('genres')} />
+                <MultiSelectBadges label="Objetivos" options={objectiveOptions} selected={objectives} onToggle={handleToggle('objectives')} />
               </div>
               <DrawerFooter className="flex-row gap-2">
                 <Button variant="outline" className="flex-1" onClick={clearFilters}>Limpar</Button>
